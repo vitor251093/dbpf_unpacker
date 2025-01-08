@@ -30,9 +30,6 @@ import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentException;
 import sporemodder.file.LocalizedText;
-import sporemodder.file.argscript.WordSplitLexer;
-import sporemodder.file.effects.ResourceID;
-import sporemodder.file.locale.LocaleUnit;
 
 public class PropertyText extends BaseProperty {
 	

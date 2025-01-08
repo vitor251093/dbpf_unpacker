@@ -21,7 +21,6 @@ package sporemodder.file.prop;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 

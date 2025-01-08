@@ -37,7 +37,6 @@ import sporemodder.MessageManager.MessageType;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.util.NameRegistry;
-import sporemodder.util.Project;
 import sporemodder.util.Project.PackageSignature;
 
 public class DBPFPackingTask extends Task<Void> {
@@ -50,55 +49,23 @@ public class DBPFPackingTask extends Task<Void> {
 	
 	/** The total progress (in [0, 1]). */
 	private double progress = 0;
-	
-	/** An object that holds information to be used by the ModAPI; it is optional. */
-	private DebugInformation debugInfo;
-	
+
 	private final PackageSignature packageSignature;
-	
-	private Exception failException;
-	
+
 	private DBPFPacker packer;
 	
 	private final AtomicBoolean running = new AtomicBoolean(true);
 	
 	private boolean noJavaFX = false;
-	private Consumer<Double> noJavaFXProgressListener;
 	private int compressThreshold = -1;
-	
-	public DBPFPackingTask(Project project, boolean storeDebugInformation) {
-		this.inputFolder = project.getFolder();
-		this.outputFile = project.getOutputPackage();
-		this.packageSignature = project.getPackageSignature();
-		this.outputStream = null;
-		
-		if (storeDebugInformation) {
-			debugInfo = new DebugInformation(project.getName(), inputFolder.getAbsolutePath());
-		}
-	}
-	
-	public DBPFPackingTask(File inputFolder, File outputFile) {
-		this.inputFolder = inputFolder;
-		this.outputFile = outputFile;
-		this.packageSignature = PackageSignature.NONE;
-		this.outputStream = null;
-	}
-	
+
 	public DBPFPackingTask(File inputFolder, StreamWriter outputStream) {
 		this.inputFolder = inputFolder;
 		this.outputFile = null;
 		this.outputStream = outputStream;
 		this.packageSignature = PackageSignature.NONE;
 	}
-	
-	public void setNoJavaFX() {
-		this.noJavaFX = true;
-	}
-	
-	public void setNoJavaFXProgressListener(Consumer<Double> listener) {
-		noJavaFXProgressListener = listener;
-	}
-	
+
 	@Override protected void updateMessage(String message) {
 		if (!noJavaFX) {
 			super.updateMessage(message);
@@ -106,60 +73,9 @@ public class DBPFPackingTask extends Task<Void> {
 	}
 	
 	@Override protected void updateProgress(double workDone, double max) {
-		if (noJavaFX) {
-			noJavaFXProgressListener.accept(workDone);
-		}
-		else {
+		if (!noJavaFX) {
 			super.updateProgress(workDone, max);
 		}
-	}
-	
-	/**
-	 * Returns the input folder that contains the files that will be packed.
-	 * @return
-	 */
-	public File getInputFolder() {
-		return inputFolder;
-	}
-	
-	/**
-	 * Returns the output file where the package will be written.
-	 * @return
-	 */
-	public File getOutputFile() {
-		return outputFile;
-	}
-	
-	/**
-	 * If this packing task is being executed to save debug information, this returns the object that contains it.
-	 * @return
-	 */
-	public DebugInformation getDebugInformation() {
-		return debugInfo;
-	}
-	
-	/**
-	 * Returns the package signature that is being embedded into this package, if any.
-	 * @return
-	 */
-	public PackageSignature getPackageSignature() {
-		return packageSignature;
-	}
-	
-	/**
-	 * Gets the current file being processed; if there was an error, this is the file that caused it.
-	 * @returns The file that was being processed when the error happened.
-	 */
-	public File getCurrentFile() {
-		return packer == null ? null : packer.getCurrentFile();
-	}
-	
-	/**
-	 * Returns the exception that made this packing task fail.
-	 * @return
-	 */
-	public Exception getFailException() {
-		return failException;
 	}
 
 	/**
@@ -173,15 +89,7 @@ public class DBPFPackingTask extends Task<Void> {
 	public void pause() {
 		running.set(false);
 	}
-	
-	public void resume() {
-		running.set(true);
-		
-		synchronized(running) {
-			running.notify();
-		}
-	}
-	
+
 	private void pack() throws Exception {
 		final HashManager hasher = HashManager.get();
 		
@@ -257,12 +165,6 @@ public class DBPFPackingTask extends Task<Void> {
 					
 					packer.writeFile(new ResourceKey(currentGroupID, currentInstanceID, currentTypeID),
 							currentInputData, currentInputData.length);
-					
-					// Add debug information
-					// We only do it here because we cannot get the files from disk in Spore if they needed to be converted
-					if (debugInfo != null ) {
-						debugInfo.addFile(currentFolderName, name, currentGroupID, currentInstanceID, currentTypeID);
-					}
 				}
 			}
 			
@@ -275,11 +177,6 @@ public class DBPFPackingTask extends Task<Void> {
 		
 		writeNamesList();
 		writePackageSignature(alreadyHasPackageSignature);
-		
-		// Save debug information
-		if (debugInfo != null) {
-			debugInfo.saveInformation(packer);
-		}
 		
 		MessageManager.get().postMessage(MessageType.OnDbpfPack, this);
 	}
@@ -304,7 +201,6 @@ public class DBPFPackingTask extends Task<Void> {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			failException = e;
 		}
 		finally {
 			if (packer != null) packer.close();
@@ -377,21 +273,4 @@ public class DBPFPackingTask extends Task<Void> {
 			packer.addFile(item);
 		}
 	}
-
-	/**
-	 * If a file size is bigger than this threshold, the file data will be compressed.
-	 * @param compressThreshold
-	 */
-	public void setCompressThreshold(int compressThreshold) {
-		this.compressThreshold = compressThreshold;
-	}
-
-	/**
-	 * If a file size is bigger than this threshold, the file data will be compressed.
-	 * @return
-	 */
-	public int getCompressThreshold() {
-		return compressThreshold;
-	}
-
 }

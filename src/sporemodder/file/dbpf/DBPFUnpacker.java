@@ -61,10 +61,7 @@ public class DBPFUnpacker {
 	
 	/** All the converters used .*/
 	private final List<Converter> converters;
-	
-	/** How much time the operation took, in milliseconds. */
-	private long ellapsedTime;
-	
+
 	/** An optional filter that defines which items should be unpacked (true) and which shouldn't (false). */
 	private DBPFItemFilter itemFilter;
 
@@ -74,32 +71,7 @@ public class DBPFUnpacker {
 		this.converters = converters;
 		this.inputStream = null;
 	}
-	
-	/**
-	 * Returns a list of all the converters that will be used when unpacking files.
-	 * On every file, if the converter {@link Converter.isDecoder()} method returns true, it will be used to decode the file.
-	 * @return
-	 */
-	public List<Converter> getConverters() {
-		return converters;
-	}
 
-	/**
-	 * Returns the output folder where the unpacked files will be written.
-	 * @return
-	 */
-	public File getOutputFolder() {
-		return outputFolder;
-	}
-	
-	/**
-	 * Sets a method that decides which items are unpacked and which are ignored.
-	 * @param itemFilter
-	 */
-	public void setItemFilter(DBPFItemFilter itemFilter) {
-		this.itemFilter = itemFilter;
-	}
-	
 	private static void findNamesFile(List<DBPFItem> items, StreamReader in, HashManager hasher) throws IOException {
 		int group = hasher.getFileHash("sporemaster");
 		int name = hasher.getFileHash("names");
@@ -259,31 +231,12 @@ public class DBPFUnpacker {
 				}
 			}
 		}
-		
-		ellapsedTime = System.currentTimeMillis() - initialTime;
 
 		return null;
 	}
-	
-	/**
-	 * Returns a Map with all the items that could not be unpacked/converted, mapped to the exception that caused that error.
-	 * @return
-	 */
-	public HashMap<DBPFItem, Exception> getExceptions() {
-		return exceptions;
-	}
 
 	private void incProgress(double increment) {
-		//progress += increment;
-		//updateProgress(progress, 1.0);
-	}
-	
-	/**
-	 * When unpacking multiple packages at once, returns a list of all package files that couldn't be unpacked.
-	 * @return
-	 */
-	public List<File> getFailedDBPFs() {
-		return failedDBPFs;
+
 	}
 
 	public static void main(String[] args) throws Exception {

@@ -36,7 +36,6 @@ import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 
 import sporemodder.HashManager;
-import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
@@ -86,26 +85,12 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	
 	private boolean noJavaFX = false;
 	private Consumer<Double> noJavaFXProgressListener;
-	
-	public DBPFUnpackingTask(File inputFile, File outputFolder) {
-		this.inputFiles.add(inputFile);
-		this.outputFolder = outputFolder;
-		this.inputStream = null;
-	}
 
 	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder) {
 		this.inputStream = inputStream;
 		this.outputFolder = outputFolder;
 	}
-	
-	public void setNoJavaFX() {
-		this.noJavaFX = true;
-	}
-	
-	public void setNoJavaFXProgressListener(Consumer<Double> listener) {
-		noJavaFXProgressListener = listener;
-	}
-	
+
 	@Override protected void updateMessage(String message) {
 		if (!noJavaFX) {
 			super.updateMessage(message);
@@ -121,14 +106,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		}
 	}
 
-	/**
-	 * Returns the output folder where the unpacked files will be written.
-	 * @return
-	 */
-	public File getOutputFolder() {
-		return outputFolder;
-	}
-	
 	/**
 	 * Returns the project that is being unpacked. This might be null if a file is being unpacked directly.
 	 * @return
