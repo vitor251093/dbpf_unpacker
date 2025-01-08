@@ -26,7 +26,6 @@ import sporemodder.file.filestructures.Structure;
 import sporemodder.file.filestructures.StructureEndian;
 import sporemodder.file.filestructures.metadata.StructureMetadata;
 import sporemodder.HashManager;
-import sporemodder.file.DocumentError;
 
 @Structure(StructureEndian.BIG_ENDIAN)
 /**
@@ -40,29 +39,7 @@ public class ResourceID {
 
 	private int groupID = -1;
 	private int instanceID = -1;
-	
-	/**
-	 * Creates a new resource ID with the given group and instance IDs.
-	 * @param groupID
-	 * @param instanceID
-	 */
-	public ResourceID(int groupID, int instanceID) {
-		this.groupID = groupID;
-		this.instanceID = instanceID;
-	}
-	
-	/**
-	 * Creates a new resource ID with the same group and instance IDs as the given resource.
-	 */
-	public ResourceID(ResourceID other) {
-		copy(other);
-	}
-	
-	/**
-	 * Creates a new resource ID with group=0xFFFFFFFF, instance=0xFFFFFFFF.
-	 */
-	public ResourceID() {}
-	
+
 	public void copy(ResourceID other) {
 		if (other != null) {
 			this.groupID = other.groupID;
@@ -70,52 +47,8 @@ public class ResourceID {
 		}
 	}
 
-	public int getGroupID() {
-		return groupID;
-	}
-
-	public void setGroupID(int groupID) {
-		this.groupID = groupID;
-	}
-
-	public int getInstanceID() {
-		return instanceID;
-	}
-
-	public void setInstanceID(int instanceID) {
-		this.instanceID = instanceID;
-	}
-	
 	public boolean isDefault() {
 		return groupID == -1 && instanceID == -1;
-	}
-	
-	public boolean isZero() {
-		return groupID == 0 && instanceID == 0;
-	}
-	
-	public void parse(String text) {
-		parse(text, null);
-	}
-	
-	public void parse(String text, String[] originalWords) {
-		String[] splits = text.split("!", 2);
-		
-		if (splits.length == 1) {
-			groupID = 0;
-			instanceID = HashManager.get().getFileHash(splits[0]);
-			
-			if (originalWords != null) originalWords[1] = splits[0];
-		}
-		else {
-			groupID = HashManager.get().getFileHash(splits[0]);
-			instanceID = HashManager.get().getFileHash(splits[1]);
-			
-			if (originalWords != null) {
-				originalWords[0] = splits[0];
-				originalWords[1] = splits[1];
-			}
-		}
 	}
 
 	public void read(StreamReader in) throws IOException {
@@ -134,11 +67,7 @@ public class ResourceID {
 	
 	@Override
 	public String toString() {
-		// this could be confusing
-		/*if (groupID == 0 && nameID == 0) {
-			return "terrain";
-		}
-		else*/ if (groupID == 1 && instanceID == 0) {
+		if (groupID == 1 && instanceID == 0) {
 			return "water";
 		}
 		

@@ -38,47 +38,6 @@ public class DocumentFragment {
 	public DocumentFragment(DocumentStructure structure) {
 		this.structure = structure;
 	}
-	
-	/**
-	 * Creates a new document fragment for the given structure, with the specified parent.
-	 * @param structure
-	 */
-	public DocumentFragment(DocumentStructure structure, DocumentFragment parent) {
-		this.structure = structure;
-		this.parent = parent;
-	}
-	
-	/**
-	 * Returns the start position of this fragment.
-	 * @return
-	 */
-	public int getStart() {
-		return start;
-	}
-
-	/**
-	 * Sets the start position of this fragment.
-	 * @param start
-	 */
-	public void setStart(int start) {
-		this.start = start;
-	}
-	
-	/**
-	 * A special position only used in certain cases, -1 by default. This is used to separate the fragment in two parts.
-	 * @return
-	 */
-	public int getEditPosition() {
-		return editPosition;
-	}
-	
-	/**
-	 * A special position only used in certain cases, -1 by default. This is used to separate the fragment in two parts.
-	 * @param editPosition
-	 */
-	public void setEditPosition(int editPosition) {
-		this.editPosition = editPosition;
-	}
 
 	/**
 	 * Returns the end position of this fragment.
@@ -116,50 +75,7 @@ public class DocumentFragment {
 	public String toString() {
 		return description;
 	}
-	
-	/**
-	 * Adds the given fragment as a child of this one. The child will be added at the end of the children list,
-	 * and therefore its start/end positions are expected to be after the rest of children of this fragment, and inside the fragment itself.
-	 * <p>
-	 * This will not modify any other fragments. If you want to adapt other fragments' positions, use 
-	 * {@link DocumentStructure.insertFragment(DocumentFragment, DocumentFragment)} instead.
-	 * <p>
-	 * This fragment will be assigned as the parent of the given child.
-	 * @param child
-	 */
-	public void addRaw(DocumentFragment child) {
-		children.add(child);
-		child.parent = this;
-	}
-	
-	/**
-	 * Adds the given fragment as a child of this one. The child will be added at the end of the children list,
-	 * and therefore its start/end positions are expected to be after the rest of children of this fragment, and inside the fragment itself.
-	 * <p>
-	 * This will not modify any other fragments. If you want to adapt other fragments' positions, use 
-	 * {@link DocumentStructure.insertFragment(DocumentFragment, DocumentFragment)} instead.
-	 * <p>
-	 * This fragment will be assigned as the parent of the given child.
-	 * @param child
-	 * @param index
-	 */
-	public void addRaw(DocumentFragment child, int index) {
-		children.add(index, child);
-		child.parent = this;
-	}
-	
-	/**
-	 * Removes the given fragment from the list of children of this one. The child fragment won't have any parent afterwards.
-	 * <p>
-	 * This will not modify any other fragments. If you want to adapt other fragments' positions, use 
-	 * {@link DocumentStructure.removeFragment(DocumentFragment, DocumentFragment)} instead.
-	 * @param child
-	 */
-	public void removeRaw(DocumentFragment child) {
-		children.remove(child);
-		child.parent = null;
-	}
-	
+
 	/** 
 	 * Returns the structure this fragment belongs to.
 	 * @return
@@ -167,28 +83,10 @@ public class DocumentFragment {
 	public DocumentStructure getStructure() {
 		return structure;
 	}
-	
-	/**
-	 * Returns the list with the children of this fragment. This should be used only for reading and the list
-	 * should not be modified.
-	 * @return
-	 */
-	public List<DocumentFragment> getChildren() {
-		return children;
-	}
-	
-	/**
-	 * Returns the fragment that acts as the parent of this one. The current fragment will be in the children list of its parent.
-	 * @return
-	 */
-	public DocumentFragment getParent() {
-		return parent;
-	}
-	
+
 	/**
 	 * Returns a list with all the parents of this fragment. The closest parent is the last item in the list.
 	 * The root fragment is not returned. If this is the root fragment, returns an empty list.
-	 * @param fragment
 	 * @return
 	 */
 	public List<DocumentFragment> getParentsList() {

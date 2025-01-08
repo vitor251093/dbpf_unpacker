@@ -1,14 +1,10 @@
 package sporemodder.file.filestructures;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class FixedMemoryStream implements ReadWriteStream {
@@ -19,31 +15,8 @@ public class FixedMemoryStream implements ReadWriteStream {
 	public FixedMemoryStream(int length) {
 		data = new byte[length];
 	}
-	public FixedMemoryStream(String path) throws IOException {
-		Path path2 = Paths.get(path);
-		data = Files.readAllBytes(path2);
-	}
-	public FixedMemoryStream(File file) throws IOException {
-		data = Files.readAllBytes(file.toPath());
-	}
 	public FixedMemoryStream(byte[] arr) {
 		data = arr;
-	}
-	
-	public FixedMemoryStream(InputStream in) throws IOException {
-		data = new byte[0];
-		
-		byte[] byteChunk = new byte[4096]; // Or whatever size you want to read in at a time.
-		int n;
-		
-		while ((n = in.read(byteChunk)) > 0 ) {
-			
-			byte[] new_data = new byte[data.length + n];
-			System.arraycopy(data, 0, new_data, 0, data.length);
-			System.arraycopy(byteChunk, 0, new_data, data.length, n);
-			
-			data = new_data;
-		}
 	}
 	
 	/**
@@ -53,16 +26,7 @@ public class FixedMemoryStream implements ReadWriteStream {
 		filePointer = 0; 
 		data = null;
 	}
-	
-	/**
-	 * Writes the current byte stream to the given file. If the file doesn't exist, it will create it.
-	 * @param path The file path where the byte stream will be written.
-	 * @throws IOException 
-	 */
-	public void writeToFile(String path) throws IOException {
-		Files.write(new File(path).toPath(), data);
-	}
-	
+
 	/**
 	 * Writes the current byte stream to the given file. If the file doesn't exist, it will create it.
 	 * @param file The File where the byte stream will be written.
@@ -71,58 +35,12 @@ public class FixedMemoryStream implements ReadWriteStream {
 	public void writeToFile(File file) throws IOException {
 		Files.write(file.toPath(), data);
 	}
-	
-	/**
-	 * Writes the selected portion of the current byte stream to the given file. If the file doesn't exist, it will create it.
-	 * Will only write len bytes being off the first one.
-	 * @param path The file path where the byte stream will be written.
-	 * @param off The offset to the first byte to be written.
-	 * @param len The number of bytes to be written, starting at off.
-	 * @throws IOException 
-	 */
-	public void writeToFile(String path, int off, int len) throws IOException {
-		FileOutputStream out = new FileOutputStream(path);
-		try {
-			out.write(data, off, len);
-		} finally {
-			out.close();
-		}
-	}
-	
-	/**
-	 * Writes the selected portion of the current byte stream to the given file. If the file doesn't exist, it will create it.
-	 * Will only write len bytes being off the first one.
-	 * @param file The File where the byte stream will be written.
-	 * @param off The offset to the first byte to be written.
-	 * @param len The number of bytes to be written, starting at off.
-	 * @throws IOException 
-	 */
-	public void writeToFile(File file, int off, int len) throws IOException {
-		FileOutputStream out = new FileOutputStream(file);
-		try {
-			out.write(data, off, len);
-		} finally {
-			out.close();
-		}
-	}
-	
+
 	public void writePadding(int pad) throws IOException {
 		Arrays.fill(data, filePointer, filePointer+pad, (byte) 0);
 		filePointer += pad;
 	}
-	
-	/**
-	 * Erases num bytes from the stream starting at off.
-	 * @param off The first byte to delete.
-	 * @param num The number of bytes to delete, starting at num.
-	 */
-	public void deleteBytes(int off, int num) {
-		byte[] newData = new byte[data.length - num];
-		System.arraycopy(data, 0, newData, 0, off-1);
-		
-		System.arraycopy(data, off+num, newData, off, data.length - off - num);
-	}
-	
+
 	@Override
 	public long length() {
 		return data.length;

@@ -27,8 +27,6 @@ import org.xml.sax.Attributes;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
-import sporemodder.file.DocumentError;
-import sporemodder.file.DocumentException;
 
 public final class PropertyInt32 extends BaseProperty {
 	

@@ -15,17 +15,10 @@ public class FileStream implements ReadWriteStream {
 	private RandomAccessFile ram;
 	private long baseOffset;
 	
-	public FileStream(String name, String mode) throws IOException {
-		this(new File(name), mode, false);
-	}
 	public FileStream(File file, String mode) throws FileNotFoundException {
 		this(file, mode, false);
 	}
-	
-	public FileStream(String name, String mode, boolean append) throws IOException {
-		this(new File(name), mode, append);
-	}
-	
+
 	public FileStream(File file, String mode, boolean append) throws FileNotFoundException {
 		if (mode.contains("w") && !append && file.exists()) {
 			file.delete();
@@ -34,13 +27,6 @@ public class FileStream implements ReadWriteStream {
 		ram = new RandomAccessFile(file, mode);
 	}
 
-	public static void writeToFile(String path, byte[] data) throws IOException {
-		new File(path).createNewFile();
-		Path path2 = Paths.get(path);
-		Files.write(path2, data, StandardOpenOption.WRITE);
-		
-	}
-	
 	@Override
 	public void writePadding(int pad) throws IOException {
 		byte[] arr = new byte[pad];

@@ -29,10 +29,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
-import javafx.scene.control.ContextMenu;
 import sporemodder.HashManager;
 import sporemodder.file.Converter;
-import sporemodder.file.DocumentException;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
 import sporemodder.file.filestructures.MemoryStream;

@@ -27,7 +27,6 @@ import org.xml.sax.Attributes;
 import sporemodder.file.filestructures.Stream.StringEncoding;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.DocumentError;
 
 public class PropertyString8 extends BaseProperty {
 	

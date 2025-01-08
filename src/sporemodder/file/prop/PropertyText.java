@@ -28,7 +28,6 @@ import sporemodder.file.filestructures.Stream.StringEncoding;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
-import sporemodder.file.DocumentException;
 import sporemodder.file.LocalizedText;
 
 public class PropertyText extends BaseProperty {

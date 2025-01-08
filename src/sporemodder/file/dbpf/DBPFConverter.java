@@ -1,10 +1,7 @@
 package sporemodder.file.dbpf;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
@@ -105,16 +102,6 @@ public class DBPFConverter implements Converter {
 	@Override
 	public int getOriginalTypeID(String extension) {
 		return TYPE_ID;
-	}
-	
-	private void unpackDialog(File inputFile, File outputFile) throws Exception {
-		try (StreamReader stream = new FileStream(inputFile, "r")) {
-			createUnpackTask(stream, outputFile);
-		}
-	}
-	
-	private void packDialog(File inputFolder, File outputFile) throws Exception {
-
 	}
 
 }

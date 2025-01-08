@@ -19,13 +19,11 @@
 package sporemodder.file.prop;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.BoundingBox;
-import sporemodder.util.Vector3;
 
 public class PropertyBBox extends BaseProperty {
 	
