@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import sporemodder.MessageManager;
 import sporemodder.MessageManager.MessageType;
 import sporemodder.PathManager;
-import sporemodder.util.GamePathConfiguration.GamePathType;
 
 public class Project {
 	
@@ -97,9 +96,6 @@ public class Project {
 	
 	private final Set<Project> references = new LinkedHashSet<>();
 	
-	/** The object that holds the path to the folder where the project DBPF is packed. */
-	private final GamePathConfiguration packPath;
-	
 	/** A list of relative paths of all those files that are fixed tabs. */
 	private final Set<String> fixedTabPaths = new LinkedHashSet<>();
 	
@@ -130,8 +126,6 @@ public class Project {
 		this.name = name;
 		this.folder = folder;
 		this.externalLink = externalLink;
-		
-		packPath = GamePathConfiguration.useGame();
 		
 		onNameChanged(null);
 	}
@@ -169,46 +163,7 @@ public class Project {
 	public static String getDefaultPackageName(String name) {
 		return name.replaceAll("\\s", "_") + ".package";
 	}
-	
-	/**
-	 * Saves the project settings into the configuration file inside the project folder.
-	 */
-	public void saveSettings() {
-		//if (!sources.isEmpty()) {
-		// Do this even if it's empty, as we need to update it if sources were removed
-		{
-			String referencesStr = references.stream().map(r -> '"' + r.name + '"').collect(Collectors.joining("|"));
-			settings.setProperty(PROPERTY_sources, referencesStr);
-		}
-		if (!fixedTabPaths.isEmpty()) {
-			String str = fixedTabPaths.stream().map(r -> '"' + r + '"').collect(Collectors.joining("|"));
-			settings.setProperty(PROPERTY_fixedTabPaths, str);
-		}
 
-		settings.put(PROPERTY_packageName, packageName);
-
-		if (packPath.getCustomPath() != null && !packPath.getCustomPath().isBlank()) {
-			settings.put(PROPERTY_customPackPath, packPath.getCustomPath());
-		}
-		settings.put(PROPERTY_packPathType, packPath.getType().toString());
-
-		settings.put(PROPERTY_packageSignature, packageSignature.toString());
-
-		settings.put(PROPERTY_isReadOnly, Boolean.toString(isReadOnly));
-
-		MessageManager.get().postMessage(MessageType.OnProjectSettingsSave, this);
-
-		// settings.store always prints a first line with a time stamp
-		// We don't want it, as that makes it look modified in git version control
-		try (StringWriter stringWriter = new StringWriter()) {
-			settings.store(stringWriter, null);
-			File outputFile = new File(folder, SETTINGS_FILE_NAME);
-			Files.write(outputFile.toPath(), stringWriter.toString().lines().skip(1).collect(Collectors.toList()));
-		} catch (IOException e) {
-			e.printStackTrace();
-        }
-	}
-	
 	/**
 	 * Returns the object that is used to load/store the project settings.
 	 * @return
@@ -326,19 +281,8 @@ public class Project {
 	 * @return
 	 */
 	public File getOutputPackage() {
-		File folder = packPath.getDataFolder();
-		
-		// The user did not specify a custom path or it does not exist.
-		if (folder == null || !folder.isDirectory()) {
-			return null;
-		}
-		
-		return new File(folder, packageName);
+		return null;
 	} 
-	
-	public GamePathConfiguration getPackPath() {
-		return packPath;
-	}
 	
 	public String getPackageName() {
 		return packageName;

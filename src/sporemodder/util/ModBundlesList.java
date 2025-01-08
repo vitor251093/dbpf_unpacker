@@ -44,35 +44,6 @@ public class ModBundlesList {
         return modBundles.values();
     }
 
-    public void loadList() {
-        if (!Files.exists(getFile())) {
-            return;
-        }
-        try {
-            Files.readAllLines(getFile()).forEach(line -> {
-                ModBundle modBundle = null;
-                if (line.contains("/") || line.contains("\\")) {
-                    // External mod folder
-                    File folder = new File(line);
-                    if (folder.exists() && folder.isDirectory()) {
-                        modBundle = new ModBundle(folder.getName(), folder);
-                    } else {
-                        System.err.println("Cannot load mod bundle '" + line + "', it is not a directory");
-                    }
-                } else {
-                    // Normal mod inside SMFX Projects
-                    modBundle = new ModBundle(line);
-                }
-                if (modBundle != null) {
-                    modBundle.loadProjects();
-                    modBundles.put(modBundle.getName().toLowerCase(), modBundle);
-                }
-            });
-        } catch (Exception e) {
-            System.err.println("Failed to read mod bundles list: " + e.getMessage());
-        }
-    }
-
     /**
      * Reads the mod bundles file again, and removes from the list any mod bundles whose folder
      * no longer exists.

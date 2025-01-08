@@ -52,10 +52,6 @@ public class ModBundle {
             }
         };
 
-        public static FileTarget fromGamePathType(GamePathConfiguration.GamePathType pathType) {
-            return pathType == GamePathConfiguration.GamePathType.SPORE ? DATA : DATAEP1;
-        }
-
         public abstract String getXmlValue();
     }
 
@@ -230,35 +226,6 @@ public class ModBundle {
         } catch (IOException e) {
             e.printStackTrace();
             return true;
-        }
-    }
-
-    public void addProject(Project project) {
-        projects.add(project);
-        packageFileTargets.put(project, FileTarget.fromGamePathType(project.getPackPath().getType()));
-    }
-
-
-    /**
-     * Load all the projects contained inside this mod 'data' folder, does not add them to the ProjectManager
-     * nor read their settings. It also fills the dllsToInstall list by auto-detecting Visual Studio
-     * projects in the src/ folder
-     */
-    public void loadProjects() {
-        assert projects.isEmpty();
-        File dataFolder = getDataFolder();
-        if (dataFolder.exists()) {
-            for (File folder : Objects.requireNonNull(dataFolder.listFiles(File::isDirectory))) {
-                Project project = new Project(folder.getName(), this);
-                projects.add(project);
-                packageFileTargets.put(project, FileTarget.fromGamePathType(project.getPackPath().getType()));
-            }
-        }
-
-        List<String> dllFiles = detectDllFiles();
-        if (dllFiles != null) {
-            dllsToInstall.clear();
-            dllsToInstall.addAll(dllFiles);
         }
     }
 
