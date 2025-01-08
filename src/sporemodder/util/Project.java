@@ -20,16 +20,12 @@
 package sporemodder.util;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import sporemodder.MessageManager;
-import sporemodder.MessageManager.MessageType;
 import sporemodder.PathManager;
 
 public class Project {
-	
+
 	public enum PackageSignature {
 		NONE {
 			@Override public String toString() {
@@ -68,17 +64,6 @@ public class Project {
 		public abstract String getFileName();
 		public abstract InputStream getInputStream();
 	}
-	
-	public static final String SETTINGS_FILE_NAME = "config.properties";
-	private static final String PROPERTY_lastTimeUsed = "lastTimeUsed";
-	private static final String PROPERTY_fixedTabPaths = "fixedTabPaths";
-	private static final String PROPERTY_sources = "sources";
-	private static final String PROPERTY_customPackPath = "packPath";  // for compatibility
-	private static final String PROPERTY_packPathType = "packPathType";
-	private static final String PROPERTY_packageName = "packageName";
-	private static final String PROPERTY_packageSignature = "embeddedEditorPackages";  // for compatibility
-	private static final String PROPERTY_isReadOnly = "isReadOnly";
-	private static final String PROPERTY_showOnlyModded = "showOnlyModded";
 
 	/** The name of the project, which is taken from the folder name. */
 	private String name;
@@ -86,40 +71,23 @@ public class Project {
 	/** The name of the DBPF file generated when packing. */
 	private String packageName;
 
-	/** Parent mod bundle that contains this project, if any */
-	private ModBundle parentMod;
-	
 	/** The folder that contains the data of the project. */
 	private File folder;
 	/** External projects have a file in the Projects folder that links to the real path. */
 	private File externalLink;
 	
 	private final Set<Project> references = new LinkedHashSet<>();
-	
-	/** A list of relative paths of all those files that are fixed tabs. */
-	private final Set<String> fixedTabPaths = new LinkedHashSet<>();
-	
+
 	/** The embedded 'editorPackages~' file that represents the package signature. */
 	private PackageSignature packageSignature = PackageSignature.NONE;
-	
-	/** Read only projects cannot be packed and its files cannot be directly edited. */
-	private boolean isReadOnly;
-	
+
 	private final Properties settings = new Properties();
-	
-	/** Extra properties that can be used by plugins. */
-	private Map<String, Object> extraProperties = new HashMap<>();
 
 	private long lastTimeUsed = -1;
 	
 	
 	public Project(String name) {
 		this(name, new File(PathManager.get().getProjectsFolder(), name), null);
-	}
-
-	public Project(String name, ModBundle parentMod) {
-		this(name, new File(parentMod.getDataFolder(), name), null);
-		this.parentMod = parentMod;
 	}
 	
 	public Project(String name, File folder, File externalLink) {
@@ -134,25 +102,6 @@ public class Project {
 		return references;
 	}
 
-	public ModBundle getParentModBundle() {
-		return parentMod;
-	}
-	
-	private String[] stringListSplit(String propertyName) {
-		String property = settings.getProperty(propertyName);
-		if (property != null && !property.isEmpty()) {
-			String[] splits = property.split("\\|");
-			String[] result = new String[splits.length];
-			for (int i = 0; i < splits.length; ++i) {
-				String str = splits[i];
-				result[i] = str.substring(1, str.length()-1);
-			}
-			return result;
-		}
-		
-		return new String[0];
-	}
-	
 	/**
 	 * Loads the project settings from the configuration file inside the project folder.
 	 */
@@ -171,38 +120,6 @@ public class Project {
 	public Properties getSettings() {
 		return settings;
 	}
-	
-	/**
-	 * Tells if the project is read-only. Read-only projects cannot be packed and its files cannot be directly edited.
-	 * @return
-	 */
-	public boolean isReadOnly() {
-		return isReadOnly;
-	}
-
-	/**
-	 * Sets whether the project should be read-only. Read-only projects cannot be packed and its files cannot be directly edited.
-	 * @param isReadOnly
-	 */
-	public void setReadOnly(boolean isReadOnly) {
-		this.isReadOnly = isReadOnly;
-	}
-	
-	/** 
-	 * Returns a list of relative paths of all those files that are fixed tabs. 
-	 * @return
-	 */
-	public Set<String> getFixedTabPaths() {
-		return fixedTabPaths;
-	}
-	
-	public boolean isShowOnlyModded() {
-		return Boolean.parseBoolean(settings.getProperty(PROPERTY_showOnlyModded, "False"));
-	}
-	
-	public void setShowOnlyModded(boolean value) {
-		settings.setProperty(PROPERTY_showOnlyModded, Boolean.toString(value));
-	}
 
 	/**
 	 * Returns the last time this project was active in the program, in milliseconds.
@@ -210,13 +127,6 @@ public class Project {
 	 */
 	public long getLastTimeUsed() {
 		return lastTimeUsed;
-	}
-	
-	/**
-	 * Updates the last time this project was active in the program, setting it to the current time.
-	 */
-	public void updateLastTimeUsed() {
-		lastTimeUsed = System.currentTimeMillis();
 	}
 
 	public void setLastTimeUsed(long time) {
@@ -287,10 +197,6 @@ public class Project {
 	public String getPackageName() {
 		return packageName;
 	}
-	
-	public void setPackageName(String packageName) {
-		this.packageName = packageName == null ? getDefaultPackageName(name) : packageName;
-	}
 
 	public PackageSignature getPackageSignature() {
 		return packageSignature;
@@ -299,18 +205,5 @@ public class Project {
 	public void setPackageSignature(PackageSignature packageSignature) {
 		this.packageSignature = packageSignature;
 	}
-	
-	/**
-	 * Returns a map that can be used by plugins to store extra properties in this Project.
-	 * These properties won't be saved/loaded by default; if you want to save/load them, use the {@link MessageManager}
-	 * @return
-	 */
-	public Map<String, Object> getExtraProperties() {
-		return extraProperties;
-	}
 
-	/** For projects that are not stored in the standard Projects folder, this sets the file that links to the real folder. */
-	public void setExternalLinkFile(File linkFile) {
-		this.externalLink = linkFile;
-	}
 }

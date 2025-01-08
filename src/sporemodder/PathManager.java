@@ -58,7 +58,7 @@ public class PathManager extends AbstractManager {
 			// First we try to get the program folder from two different sources
 			//programFolder = new File(System.getProperty("user.dir"));
 			try {
-				programFolder = new File(Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+				programFolder = new File(PathManager.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
 			} catch (URISyntaxException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
