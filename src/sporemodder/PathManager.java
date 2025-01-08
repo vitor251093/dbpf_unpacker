@@ -46,7 +46,7 @@ public class PathManager extends AbstractManager {
 	 * Returns the current instance of the PathManager class.
 	 */
 	public static PathManager get() {
-		return MainApp.get().getPathManager();
+		return null;
 	}
 	
 	

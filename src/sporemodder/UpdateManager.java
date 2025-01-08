@@ -68,7 +68,7 @@ public class UpdateManager {
     public static final VersionInfo versionInfo = VersionInfo.fromString(Launcher.VERSION);
     
     public static UpdateManager get() {
-    	return MainApp.get().getUpdateManager();
+    	return null;
     }
     
     public VersionInfo getVersionInfo() {
@@ -101,47 +101,7 @@ public class UpdateManager {
 
 	private static String executeGet(String request) throws IOException {
 		
-		HttpsURLConnection connection = null;
-		
-		try
-		{
-			URL url = new URL(NetworkUtils.GITHUB_API_URL + request);
-			
-			connection = (HttpsURLConnection) url.openConnection();
-			// github api uses HTTPS
-			connection.setSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
-			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Accept", "application/vnd.github.v3+json");
-			
-			int responseCode = connection.getResponseCode();
-//			System.out.println("\nSending 'GET' request to URL : " + url);
-//			System.out.println("Response Code : " + responseCode);
-			
-			BufferedReader in = new BufferedReader(
-			        new InputStreamReader(connection.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-			
-			// Make sure response code is in the 200 range.
-	        if (responseCode / 100 != 2) {
-	            throw new IOException(response.toString());
-	        }
-
-			//print result
-			return response.toString();
-		}
-		finally 
-		{
-			if (connection != null)
-			{
-				connection.disconnect();
-			}
-		}
+		return null;
 	}
 	
 	public JSONObject getLastRelease(String owner, String repo) throws IOException, ParseException {

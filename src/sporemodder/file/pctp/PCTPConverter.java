@@ -27,13 +27,12 @@ import sporemodder.file.filestructures.StreamWriter;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
 import sporemodder.file.Converter;
 import sporemodder.file.DocumentException;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.argscript.ArgScriptStream;
 import sporemodder.file.dbpf.DBPFPacker;
-import sporemodder.util.ProjectItem;
+
 
 public class PCTPConverter implements Converter {
 

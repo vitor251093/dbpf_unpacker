@@ -34,11 +34,10 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
-import sporemodder.util.ProjectItem;
+
 
 public class BitmapConverter implements Converter {
 

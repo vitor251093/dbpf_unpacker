@@ -41,7 +41,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import sporemodder.FileManager;
-import sporemodder.view.ProjectTreeItem;
 
 public class ProjectSearcher {
 	private static int TIME_TEST = 0;
@@ -208,131 +207,6 @@ public class ProjectSearcher {
 		numItemsSearched = 0;
 		progress.set(0.0);
 		TIME_TEST = 0;
-	}
-	
-	public void startSearch(ProjectTreeItem item) {
-		reset();
-		progressMax = item.getInternalChildren().size();
-		
-		ForkJoinPool.commonPool().submit(new SearchTask(item));
-	}
-	
-	private class SearchTask extends RecursiveAction {
-		
-		private final ProjectTreeItem item;
-		
-		public SearchTask(ProjectTreeItem item) {
-			super();
-			this.item = item;
-		}
-
-		@Override
-		protected void compute() {
-			internalIsSearching = true;
-			Platform.runLater(() -> isSearching.set(true));
-			long time = System.currentTimeMillis();
-			
-			// The given item is expected to have its children loaded
-//			List<ItemSearchRecursive> tasks = new ArrayList<ItemSearchRecursive>();
-//			for (ProjectTreeItem child : item.getInternalChildren()) {
-//				tasks.add(new ItemSearchRecursive(child, null, 1.0 / progressMax));
-//			}
-//			ForkJoinTask.invokeAll(tasks);
-			new ItemSearchRecursive(item, null, 1.0 / progressMax, true).invoke();
-			
-			time = System.currentTimeMillis() - time;
-
-			// If it wasn't cancelled
-			if (internalIsSearching) Platform.runLater(() -> {
-				isSearching.set(false);
-				progress.set(1.0);
-			});
-			internalIsSearching = false;
-			
-			System.out.println("Files searched: " + numFilesSearched);
-			System.out.println("Items searched: " + numItemsSearched);
-			System.out.println(time + " ms");
-			System.out.println("Time blocked in File.list(): " + TIME_TEST);
-		}
-	}
-	
-	private class ItemSearchRecursive extends RecursiveTask<Boolean> {
-		
-		private final ProjectTreeItem item;
-		private final boolean[] foundWords;
-		private final double progressIncrement;
-		// Roots don't add increment, but pass the increment to their children
-		private final boolean isSearchRoot;
-		
-		public ItemSearchRecursive(ProjectTreeItem item, boolean[] foundWords, double progressIncrement, boolean isSearchRoot) {
-			super();
-			this.item = item;
-			this.foundWords = new boolean[wordBytes.length];
-			this.progressIncrement = progressIncrement;
-			this.isSearchRoot = isSearchRoot;
-			if (foundWords != null) {
-				System.arraycopy(foundWords, 0, this.foundWords, 0, foundWords.length);
-			}
-		}
-		
-		public ItemSearchRecursive(ProjectTreeItem item, boolean[] foundWords, double progressIncrement) {
-			this(item, foundWords, progressIncrement, false);
-		}
-		
-		@Override protected Boolean compute() {
-			if (!internalIsSearching) return false;
-			
-			numItemsSearched++;
-			//System.out.println("Items: " + numItemsSearched + "\t[" + item.getValue().getName() + "]");
-			// We want to search in the name if the search root is not the project root
-			boolean matches = (isSearchRoot && item.getValue().isRoot) ? false : searchInNameOptional(item.getValue().name, foundWords);
-			File file = item.getValue().getFile();
-			
-			if (matches) {
-				// If the name matches, all its children must be shown (and we don't need to search in them)
-				item.propagateMatchesSearch(matches);
-			}
-			else {
-				if (file != null && file.isFile()) {
-					if (FileManager.get().isSearchable(file.getName()) && isExtensiveSearch) {
-						try {
-							matches = searchInFile(file, foundWords);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-				else if (item.isLoaded()) {
-					// We must search in all children
-					List<ItemSearchRecursive> tasks = new ArrayList<ItemSearchRecursive>();
-					for (ProjectTreeItem child : item.getInternalChildren()) {
-						tasks.add(new ItemSearchRecursive(child, foundWords, isSearchRoot ? progressIncrement : 0.0));
-					}
-					
-					//System.out.println(tasks.size() + " tasks scheduled");
-					
-					// matches will be true if any of its children matched
-					matches = ForkJoinTask.invokeAll(tasks).stream().map(ForkJoinTask::join).anyMatch(b -> b == null ? false : b.booleanValue());
-				}
-				else {
-					// The name does not match, so search in its children
-					// BUT the children are not loaded, so we must do it on the files directly
-					
-					//System.out.println("\tInvoking file search: " + item.getValue().getRelativePath());
-					final AtomicBoolean anyMatch = new AtomicBoolean(false);
-					new FileSearchRecursive(item.getValue().getRelativePath(), null, null, anyMatch).invoke();
-					matches = anyMatch.get();
-				}
-			}
-			
-			if (!isSearchRoot && progressIncrement != 0.0) {
-				progress.setValue(progress.getValue() + progressIncrement);
-			}
-			
-			item.setMatchesSearch(matches);
-			
-			return matches;
-		}
 	}
 	
 	// The "return value" is an AtomicBoolean instead, because we might want to stop the search before

@@ -41,7 +41,7 @@ public class FileManager extends AbstractManager {
 	 * Returns the current instance of the FileManager class.
 	 */
 	public static FileManager get() {
-		return MainApp.get().getFileManager();
+		return null;
 	}
 
 	public static final ExtensionFilter FILEFILTER_ALL = new ExtensionFilter("All Files", "*.*");

@@ -1,7 +1,6 @@
 package sporemodder.util;
 
 import sporemodder.PathManager;
-import sporemodder.ProjectManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,26 +48,7 @@ public class ProjectsList {
      * Load all projects from SMFX Projects folder that are not part of any mod bundle.
      */
     public void loadStandaloneProjects() {
-        File projectsFolder = PathManager.get().getProjectsFolder();
-        if (!projectsFolder.exists()) projectsFolder.mkdir();
 
-        if (!projectsFolder.exists()) {
-            System.err.println("Failed to load any projects, projects folder does not exist: " + projectsFolder.getAbsolutePath());
-            return;
-        }
-
-        for (File folder : Objects.requireNonNull(projectsFolder.listFiles())) {
-            if (ProjectManager.get().hasModBundle(folder.getName())) {
-                continue;
-            }
-            Project project = folder.isDirectory()
-                    ? new Project(folder.getName())
-                    : parseExternalProjectLink(folder);
-            if (project != null) {
-                project.loadSettings();
-                projects.put(project.getName().toLowerCase(), project);
-            }
-        }
     }
 
     /**

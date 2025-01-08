@@ -130,7 +130,7 @@ public class MessageManager extends AbstractManager {
 	 * Returns the current instance of the MessageManager class.
 	 */
 	public static MessageManager get() {
-		return MainApp.get().getMessageManager();
+		return null;
 	}
 	
 	private final Map<MessageType, Set<MessageListener>> listeners = new HashMap<>();

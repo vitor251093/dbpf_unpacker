@@ -184,7 +184,7 @@ public class FormatManager extends AbstractManager {
 	 * Returns the current instance of the FormatManager class.
 	 */
 	public static FormatManager get() {
-		return MainApp.get().getFormatManager();
+		return null;
 	}
 	
 }

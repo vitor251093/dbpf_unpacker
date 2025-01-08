@@ -39,7 +39,7 @@ public class HashManager extends AbstractManager {
 	 * Returns the current instance of the HashManager class.
 	 */
 	public static HashManager get() {
-		return MainApp.get().getHashManager();
+		return null;
 	}
 
 	/** The symbols used to print floating point values. This decides the decimal separator: we must always use '.' to avoid language problems. */

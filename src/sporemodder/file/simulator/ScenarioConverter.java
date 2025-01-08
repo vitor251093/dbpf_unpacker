@@ -6,14 +6,13 @@ import java.io.PrintWriter;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.util.ProjectItem;
+
 
 public class ScenarioConverter implements Converter {
 	

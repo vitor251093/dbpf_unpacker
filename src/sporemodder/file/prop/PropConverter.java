@@ -39,7 +39,7 @@ import sporemodder.file.dbpf.DBPFPacker;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.util.ProjectItem;
+
 
 public class PropConverter implements Converter {
 	

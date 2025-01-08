@@ -33,7 +33,6 @@ import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
-import sporemodder.MainApp;
 import sporemodder.file.dds.DDSTexture;
 import sporemodder.file.rw4.RWHeader.RenderWareType;
 import sporemodder.file.rw4.RWKeyframe.LocRotScale;
@@ -420,103 +419,6 @@ public class RenderWare {
 
 	public String getName(RWObject object) {
 		return object.getClass().getSimpleName() + '-' + sectionInfos.indexOf(object.sectionInfo);
-	}
-	
-	public static void main(String[] args) throws Exception {
-		MainApp.testInit();
-		
-		String path = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\Valla_SporePartsXtended\\editor_rigblock~\\ce_sense_ear_side_04.rw4";
-		RenderWare renderWare = RenderWare.fromFile(new File(path));
-		renderWare.printInfo();
-		
-		System.out.println();
-		
-		/*String path = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\Spore (Game & Graphics)\\editor_rigblock~";
-		for (String name : new File(path).list()) {
-			if (name.endsWith(".rw4")) {
-				RenderWare renderWare = RenderWare.fromFile(new File(path, name));
-				List<RWBlendShapeBuffer> list = renderWare.getObjects(RWBlendShapeBuffer.class);
-				for (RWBlendShapeBuffer obj : list) {
-					for (int i = 4; i <= 8; i++) {
-						if (obj.data[i] != null) {
-							System.out.println(name + ": has data index " + i);
-						}
-					}
-				}
-			}
-		}*/
-		
-		/*String inputPath = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\ModCreatorKit_\\camera_properties~\\ce_prisms_drone_01_A_TL.rw4";
-		String outputPath = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\ModCreatorKit_\\camera_properties~\\ce_prisms_drone_01_A_TL test.rw4";
-		
-		RenderWare renderWare = RenderWare.fromFile(new File(inputPath));
-		 */
-		
-		/*String inputPath = "C:\\Users\\Eric\\Downloads\\broken_rw4s\\";
-		String outputPath = "C:\\Users\\Eric\\Desktop\\fixed broken_rw4s";
-		
-		for (String name : new File(inputPath).list()) {
-			RenderWare renderWare = RenderWare.fromFile(new File(inputPath, name));
-			
-			List<RWMorphHandle> handles = renderWare.getObjects(RWMorphHandle.class);
-			for (RWMorphHandle handle : handles) {
-				if (handle.handleID == 0x503283AA) {
-					for (Channel<? extends RWKeyframe> channel : handle.animation.channels) {
-						swapKeyframes(channel);
-					}
-				}
-			}
-
-			try (FileStream stream = new FileStream(new File(outputPath, name), "rw")) {
-				renderWare.write(stream);
-			}
-			
-			System.out.println(name);
-		}*/
-		
-//		Map<Integer, List<String>> nameSet = new HashMap<>();
-//		
-//		for (File file : new File(path).listFiles()) {
-//			if (file.getName().endsWith(".rw4") && file.getName().startsWith("ce_details_")) {
-//				try {
-//					RenderWare renderWare = RenderWare.fromFile(file);
-//					List<RWAnimations> anims = renderWare.getObjects(RWAnimations.class);
-//					if (!anims.isEmpty()) {
-//						for (Integer i : anims.get(0).animations.keySet()) {
-//							List<String> list = nameSet.get(i);
-//							if (list == null) {
-//								list = new ArrayList<>();
-//								nameSet.put(i, list);
-//							}
-//							list.add(file.getName());
-//						}
-//					}
-//				}
-//				catch (Exception e) {
-//					System.err.println("Error reading " + file.getName());
-//				}
-//			}
-//		}
-//		
-//		System.out.println();
-//		System.out.println();
-//		
-//		for (Integer i : nameSet.keySet()) {
-//			System.out.print(HashManager.get().getFileName(i) + "\t - ");
-//			for (String s : nameSet.get(i)) System.out.print(s + " ");
-//			System.out.println();
-//		}
-
-//		List<RWSkeleton> list = renderWare.getObjects(RWSkeleton.class);
-//		if (!list.isEmpty()) {
-//			for (RWSkeleton sk : list) {
-//				System.out.println("## SKELETON: " + HashManager.get().getFileName(sk.skeletonID));
-//				for (Bone bone : sk.bones) {
-//					System.out.println(bone);
-//				}
-//				System.out.println();
-//			}
-//		}
 	}
 	
 	private static <T extends RWKeyframe> void swapKeyframes(Channel<T> channel) {

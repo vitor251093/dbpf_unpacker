@@ -63,23 +63,17 @@ public class DocumentationManager extends AbstractManager {
 	 * @return The documentation manager
 	 */
 	public static DocumentationManager get() {
-		return MainApp.get().getDocumentationManager();
+		return null;
 	}
 	
 	@Override public void initialize(Properties settings) {
-		try {
-			loadDocLinks(NetworkUtils.getJSON(NetworkUtils.getUrl("https://raw.githubusercontent.com/emd4600/SporeModder-FX/master/smfx_docs.json")));
-		} 
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+
 	}
 	
 	/**
 	 * Returns the documentation string associated with the given code. If the code is, for example, "particles.alpha.vary", that same code will be searched
 	 * in the "particles" file. 
 	 * If nothing was assigned to the given documentation code, or the text assigned was blank, the documentation code itself is returned.
-	 * @param fileName
 	 * @param code
 	 * @return
 	 */
@@ -127,36 +121,7 @@ public class DocumentationManager extends AbstractManager {
 	}
 	
 	public Pane createDocumentationPane(String entry) {
-		List<DocumentationLinkCategory> categories = getDocumentationLinks(entry);
-		if (categories == null) return null;
-		
-		Pane pane = new VBox();
-		pane.setPadding(new Insets(5, 0, 0, 0));
-		
-		for (DocumentationLinkCategory category : categories) {
-			if (!category.name.isEmpty()) {
-				Label label = new Label(category.name);
-				label.getStyleClass().add("inspector-docs-title");
-				pane.getChildren().add(label);
-			}
-			for (DocumentationLink link : category.links) {
-				Hyperlink hl = new Hyperlink(link.title);
-				hl.setWrapText(true);
-				hl.getStyleClass().add("inspector-docs-link");
-				if (link.url.isEmpty()) {
-					hl.setDisable(true);
-				} 
-				else {
-					hl.setTooltip(new Tooltip(link.url));
-					hl.setOnAction(event -> {
-						MainApp.get().getHostServices().showDocument(link.url);
-					});
-				}
-				pane.getChildren().add(hl);
-			}
-		}
-		
-		return pane;
+		return null;
 	}
 	
 	private Properties loadFile(String fileName) {

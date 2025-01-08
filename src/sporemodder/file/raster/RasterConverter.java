@@ -26,12 +26,11 @@ import sporemodder.file.filestructures.StreamWriter;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
 import sporemodder.file.dds.DDSTexture;
-import sporemodder.util.ProjectItem;
+
 
 public class RasterConverter implements Converter {
 

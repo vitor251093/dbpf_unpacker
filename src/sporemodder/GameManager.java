@@ -80,7 +80,7 @@ public class GameManager extends AbstractManager {
 	 * Returns the current instance of the GameManager class.
 	 */
 	public static GameManager get() {
-		return MainApp.get().getGameManager();
+		return null;
 	}
 	
 	/**

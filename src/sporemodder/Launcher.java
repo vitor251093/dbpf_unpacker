@@ -30,17 +30,6 @@ import sporemodder.util.Project;
 public class Launcher {
 	
 	public static final String VERSION = Optional.ofNullable(Launcher.class.getPackage().getImplementationVersion()).orElse("1.0.0");
-
-	public static void main(String[] args) throws InterruptedException {
-		if (args.length == 0) {
-			MainApp.main(args);
-		}
-		else {
-			MainApp.testInit();
-			int exitCode = new CommandLine(new SMFXCommand()).execute(args);
-	        System.exit(exitCode);
-		}
-	}
 	
 	public static class IdConverter implements ITypeConverter<Integer> {
 	    @Override public Integer convert(String value) throws Exception {

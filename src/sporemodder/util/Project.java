@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import sporemodder.MessageManager;
 import sporemodder.MessageManager.MessageType;
 import sporemodder.PathManager;
-import sporemodder.ProjectManager;
 import sporemodder.util.GamePathConfiguration.GamePathType;
 
 public class Project {
@@ -164,53 +163,7 @@ public class Project {
 	 * Loads the project settings from the configuration file inside the project folder.
 	 */
 	public void loadSettings() {
-		File file = new File(folder, SETTINGS_FILE_NAME);
-		if (file.exists()) {
-			try (InputStream stream = new FileInputStream(file)) {
-				settings.load(stream);
-				
-				ProjectManager projectManager = ProjectManager.get();
-				
-				String[] sourceNames = stringListSplit(PROPERTY_sources);
-				references.clear();
-				for (String str : sourceNames) {
-					Project p = projectManager.getProject(str);
-					if (p != null) references.add(p);
-				}
-				
-				String[] tabPaths = stringListSplit(PROPERTY_fixedTabPaths);
-				fixedTabPaths.clear();
-				fixedTabPaths.addAll(Arrays.asList(tabPaths));
-				
-				packageName = settings.getProperty(PROPERTY_packageName);
-				if (packageName == null) packageName = getDefaultPackageName(name);
-				
-				String packPathStr = settings.getProperty(PROPERTY_packPathType);
-				if (packPathStr != null) {
-					packPath.setCustomPath(settings.getProperty(PROPERTY_customPackPath, ""));
-					packPath.setType(GamePathType.valueOf(packPathStr));
-				}
-				
-				String packageSignatureStr = settings.getProperty(PROPERTY_packageSignature, "None");
-				for (PackageSignature enumEntry : PackageSignature.values()) {
-					if (packageSignatureStr.equals(enumEntry.toString())) {
-						packageSignature = enumEntry;
-					}
-				}
-				
-				isReadOnly = Boolean.parseBoolean(settings.getProperty(PROPERTY_isReadOnly, "false"));
 
-				String lastTimeUsedStr = settings.getProperty(PROPERTY_lastTimeUsed);
-				if (lastTimeUsedStr != null && !lastTimeUsedStr.isBlank()) {
-					lastTimeUsed = Long.parseLong(lastTimeUsedStr);
-				}
-				
-				MessageManager.get().postMessage(MessageType.OnProjectSettingsLoad, this);
-			} 
-			catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	public static String getDefaultPackageName(String name) {

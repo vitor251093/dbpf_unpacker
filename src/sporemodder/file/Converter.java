@@ -25,7 +25,7 @@ import sporemodder.file.filestructures.StreamWriter;
 import javafx.scene.control.ContextMenu;
 import sporemodder.HashManager;
 import sporemodder.file.dbpf.DBPFPacker;
-import sporemodder.util.ProjectItem;
+
 
 public interface Converter {
 

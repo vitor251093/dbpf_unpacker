@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import sporemodder.HashManager;
-import sporemodder.MainApp;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 
@@ -121,18 +120,6 @@ public class CreatureData {
 			for (int i = 0; i < counts[3]; i++) {
 				stream.skip(0x38);
 			}
-		}
-	}
-	
-	public static void main(String[] args) throws IOException {
-		MainApp.testInit();
-		
-		//String path = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\Player Creations\\creature_editorModel~\\0x1D79B75D.creaturedata";
-		String path = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\EditorSaves\\creature_editorModel~\\0x21ED3ABA.creaturedata";
-		
-		try (FileStream stream = new FileStream(path, "r")) {
-			CreatureData creatureData = new CreatureData();
-			creatureData.read(stream);
 		}
 	}
 }

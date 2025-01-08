@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import sporemodder.HashManager;
-import sporemodder.MainApp;
 import sporemodder.file.argscript.ArgScriptArguments;
 import sporemodder.file.argscript.ArgScriptBlock;
 import sporemodder.file.argscript.ArgScriptLine;
@@ -155,35 +154,5 @@ public class LevelDefinition {
 		});
 		
 		return stream;
-	}
-	
-	public static void main(String[] args) throws IOException {
-		MainApp.testInit();
-		
-		String path = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\Spore (Game & Graphics)\\LevelEditor_Saves~\\";
-		String outputPath = "E:\\Eric\\Eclipse Projects\\SporeModder FX\\Projects\\Levels\\LevelEditor_Saves~";
-		
-		File outputFolder = new File(outputPath);
-		File folder = new File(path);
-		for (File file : folder.listFiles())
-		{
-			if (file.getName().endsWith(".lvl"))
-			{
-				System.out.println(file.getName());
-				try (FileStream stream = new FileStream(file, "r")) {
-					LevelDefinition lvl = new LevelDefinition();
-					lvl.read(stream);
-					
-					lvl.toArgScript().write(new File(outputFolder, file.getName() + ".lvl_t"));
-					
-					for (GameplayMarker marker : lvl.markers) {
-						System.out.println(marker.pos + 
-								"     type: " + HashManager.get().getFileName(marker.type) + 
-								"     id: " + HashManager.get().getFileName(marker.id) + 
-								"     definitionID: " + HashManager.get().getFileName(marker.definitionID));
-					}
-				}
-			}
-		}
 	}
 }
