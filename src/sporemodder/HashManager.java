@@ -19,13 +19,13 @@
 
 package sporemodder;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Properties;
 
-import javafx.scene.control.Alert;
 import sporemodder.file.cnv.CnvUnit;
 import sporemodder.util.NameRegistry;
 
@@ -83,31 +83,37 @@ public class HashManager extends AbstractManager {
 		defaultDecimalFormat = new DecimalFormat(decimalFormat, decimalSymbols);
 		defaultDecimalFormat.setNegativePrefix("-");
 
+		PathManager pathManager = new PathManager();
+		pathManager.initialize(null);
 		try {
-			fileRegistry.read(PathManager.get().getProgramFile(fileRegistry.getFileName()));
+			fileRegistry.read(pathManager.getProgramFile(fileRegistry.getFileName()));
 		} catch (Exception e) {
 			UIManager.get().setInitializationError("The file name registry (reg_file.txt) is corrupt or missing.");
 		}
 		try {
-			typeRegistry.read(PathManager.get().getProgramFile(typeRegistry.getFileName()));
+			typeRegistry.read(pathManager.getProgramFile(typeRegistry.getFileName()));
 		} catch (Exception e) {
 			UIManager.get().setInitializationError("The types registry (reg_type.txt) is corrupt or missing.");
 		}
 		try {
-			propRegistry.read(PathManager.get().getProgramFile(propRegistry.getFileName()));
+			propRegistry.read(pathManager.getProgramFile(propRegistry.getFileName()));
 		} catch (Exception e) {
 			UIManager.get().setInitializationError("The property registry (reg_property.txt) is corrupt or missing.");
 		}
 		try {
-			simulatorRegistry.read(PathManager.get().getProgramFile(simulatorRegistry.getFileName()));
-			simulatorRegistry.read(PathManager.get().getProgramFile("reg_simulator_stub.txt"));
+			simulatorRegistry.read(pathManager.getProgramFile(simulatorRegistry.getFileName()));
+			simulatorRegistry.read(pathManager.getProgramFile("reg_simulator_stub.txt"));
 		} catch (Exception e) {
 			UIManager.get().setInitializationError("The simulator attributes registry (reg_simulator.txt or reg_simulator_stub.txt) is corrupt or missing.");
 		}
-		
-		CnvUnit.loadNameRegistry();
-		
-		registries.put(fileRegistry.getFileName(), fileRegistry);
+
+        try {
+            CnvUnit.loadNameRegistry(this, pathManager);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        registries.put(fileRegistry.getFileName(), fileRegistry);
 		registries.put(typeRegistry.getFileName(), typeRegistry);
 		registries.put(propRegistry.getFileName(), propRegistry);
 		registries.put(simulatorRegistry.getFileName(), simulatorRegistry);

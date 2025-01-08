@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,13 +31,8 @@ import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.HashManager;
-import sporemodder.MessageManager;
-import sporemodder.MessageManager.MessageType;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
-import sporemodder.util.Project;
-import sporemodder.util.Project.PackageSignature;
-import sporemodder.util.ResumableTask;
 
 public class DBPFUnpacker {
 	
@@ -49,10 +43,7 @@ public class DBPFUnpacker {
 	
 	/** The estimated progress (in [0, 1]) that reading the index takes. */ 
 	private static final double INDEX_PROGRESS = 0.15;
-	
-	// Cannot use getProgress() as it throws thread exception
-	private double progress = 0;
-	
+
 	/** The list of input DBPF files, in order of priority. */
 	private final List<File> inputFiles = new ArrayList<File>();
 	
@@ -76,30 +67,12 @@ public class DBPFUnpacker {
 	
 	/** An optional filter that defines which items should be unpacked (true) and which shouldn't (false). */
 	private DBPFItemFilter itemFilter;
-	
-	private Project project;
-	
-	public DBPFUnpacker(File inputFile, File outputFolder, Project project, List<Converter> converters) {
+
+	public DBPFUnpacker(File inputFile, File outputFolder, List<Converter> converters) {
 		this.inputFiles.add(inputFile);
 		this.outputFolder = outputFolder;
 		this.converters = converters;
-		this.project = project;
 		this.inputStream = null;
-	}
-	
-	public DBPFUnpacker(Collection<File> inputFiles, File outputFolder, Project project, List<Converter> converters) {
-		this.inputFiles.addAll(inputFiles);
-		this.outputFolder = outputFolder;
-		this.converters = converters;
-		this.project = project;
-		this.inputStream = null;
-	}
-	
-	public DBPFUnpacker(StreamReader inputStream, File outputFolder, Project project, List<Converter> converters) {
-		this.inputStream = inputStream;
-		this.outputFolder = outputFolder;
-		this.converters = converters;
-		this.project = project;
 	}
 	
 	/**
@@ -110,29 +83,13 @@ public class DBPFUnpacker {
 	public List<Converter> getConverters() {
 		return converters;
 	}
-	
-	/**
-	 * Returns the list of input package files that will be unpacked.
-	 * @return
-	 */
-	public List<File> getInputFiles() {
-		return inputFiles;
-	}
-	
+
 	/**
 	 * Returns the output folder where the unpacked files will be written.
 	 * @return
 	 */
 	public File getOutputFolder() {
 		return outputFolder;
-	}
-	
-	/**
-	 * Returns the project that is being unpacked. This might be null if a file is being unpacked directly.
-	 * @return
-	 */
-	public Project getProject() {
-		return project;
 	}
 	
 	/**
@@ -143,8 +100,7 @@ public class DBPFUnpacker {
 		this.itemFilter = itemFilter;
 	}
 	
-	private static void findNamesFile(List<DBPFItem> items, StreamReader in) throws IOException {
-		HashManager hasher = HashManager.get();
+	private static void findNamesFile(List<DBPFItem> items, StreamReader in, HashManager hasher) throws IOException {
 		int group = hasher.getFileHash("sporemaster");
 		int name = hasher.getFileHash("names");
 		
@@ -159,8 +115,9 @@ public class DBPFUnpacker {
 	}
 
 	private void unpackStream(StreamReader packageStream, HashMap<Integer, List<ResourceKey>> writtenFiles) throws IOException, InterruptedException {
-		HashManager hasher = HashManager.get();
-			
+		HashManager hasher = new HashManager();
+		hasher.initialize(null);
+
 		//updateMessage("Reading file index...");
 		
 		DatabasePackedFile header = new DatabasePackedFile();
@@ -177,7 +134,7 @@ public class DBPFUnpacker {
 		
 		//First search sporemaster/names.txt, and use it if it exists
 		hasher.getProjectRegistry().clear();
-		findNamesFile(index.items, packageStream);
+		findNamesFile(index.items, packageStream, hasher);
 		
 		for (DBPFItem item : index.items) {
 			// Ensure the task is not paused
@@ -220,14 +177,6 @@ public class DBPFUnpacker {
 				
 				// Do not convert editor packages
 				if (groupID == 0x40404000 && item.name.getTypeID() == 0x00B1B104) {
-					if (project != null) {
-						for (PackageSignature entry : PackageSignature.values()) {
-							if (entry.getFileName() != null && hasher.fnvHash(entry.getFileName()) == instanceID) {
-								project.setPackageSignature(entry);
-								break;
-							}
-						}
-					}
 				}
 				else {
 					try {
@@ -284,8 +233,6 @@ public class DBPFUnpacker {
 	
 	public Exception call() throws Exception {
 		
-		MessageManager.get().postMessage(MessageType.BeforeDbpfUnpack, this);
-		
 		long initialTime = System.currentTimeMillis();
 		
 		if (inputStream != null) {
@@ -314,13 +261,7 @@ public class DBPFUnpacker {
 		}
 		
 		ellapsedTime = System.currentTimeMillis() - initialTime;
-		
-		// Ensure the taskbar progress is over
-		//updateProgress(1.0, 1.0);
-		//updateMessage("Finished");
-		
-		MessageManager.get().postMessage(MessageType.OnDbpfUnpack, this);
-		
+
 		return null;
 	}
 	
@@ -331,17 +272,9 @@ public class DBPFUnpacker {
 	public HashMap<DBPFItem, Exception> getExceptions() {
 		return exceptions;
 	}
-	
-	/**
-	 * Returns how much time the operation took, in milliseconds.
-	 * @return
-	 */
-	public long getEllapsedTime() {
-		return ellapsedTime;
-	}
 
 	private void incProgress(double increment) {
-		progress += increment;
+		//progress += increment;
 		//updateProgress(progress, 1.0);
 	}
 	
@@ -351,5 +284,14 @@ public class DBPFUnpacker {
 	 */
 	public List<File> getFailedDBPFs() {
 		return failedDBPFs;
+	}
+
+	public static void main(String[] args) throws Exception {
+		// Note: The output folder must already exist
+		File inputFile = new File("/home/vitor/Projects/recap/darkspore/5.3.0.127/Data/ServerData.package");
+		File ooutputFile = new File("/home/vitor/Projects/recap/darkspore/5.3.0.127/Data/ServerData.package.out");
+		List<Converter> converters = List.of(new DBPFConverter());
+		var unpacker = new DBPFUnpacker(inputFile, ooutputFile, converters);
+		unpacker.call();
 	}
 }

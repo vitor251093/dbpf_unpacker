@@ -42,12 +42,10 @@ public class CnvUnit {
 	
 	public static NameRegistry FLAGS_REGISTRY;
 	
-	public static void loadNameRegistry() {
-		FLAGS_REGISTRY = new NameRegistry(HashManager.get(), "Conversation flags registry", "reg_cnv.txt");
+	public static void loadNameRegistry(HashManager hashManager, PathManager pathManager) throws IOException {
+		FLAGS_REGISTRY = new NameRegistry(hashManager, "Conversation flags registry", "reg_cnv.txt");
 		
-		UIManager.get().tryAction(() -> {
-			FLAGS_REGISTRY.read(PathManager.get().getProgramFile(FLAGS_REGISTRY.getFileName()));
-		}, "The conversation flags registry (reg_cnv.txt) is corrupt or missing.");
+		FLAGS_REGISTRY.read(pathManager.getProgramFile(FLAGS_REGISTRY.getFileName()));
 	}
 	
 	public final List<CnvAnimation> animations = new ArrayList<>();

@@ -37,16 +37,11 @@ import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 
 import sporemodder.HashManager;
-import sporemodder.MessageManager;
-import sporemodder.MessageManager.MessageType;
-import sporemodder.ProjectManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
-import sporemodder.util.Project;
-import sporemodder.util.Project.PackageSignature;
 import sporemodder.util.ResumableTask;
 
 public class DBPFUnpackingTask extends ResumableTask<Exception> {
@@ -88,8 +83,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	/** An optional filter that defines which items should be unpacked (true) and which shouldn't (false). */
 	private DBPFItemFilter itemFilter;
 	
-	private Project project;
-	
 	private boolean setPackageSignature;
 	
 	//TODO it's faster, but apparently it causes problems; I can't reproduce the bug
@@ -98,27 +91,24 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	private boolean noJavaFX = false;
 	private Consumer<Double> noJavaFXProgressListener;
 	
-	public DBPFUnpackingTask(File inputFile, File outputFolder, Project project, List<Converter> converters) {
+	public DBPFUnpackingTask(File inputFile, File outputFolder, Object project, List<Converter> converters) {
 		this.inputFiles.add(inputFile);
 		this.outputFolder = outputFolder;
 		this.converters = converters;
-		this.project = project;
 		this.inputStream = null;
 	}
 	
-	public DBPFUnpackingTask(Collection<File> inputFiles, File outputFolder, Project project, List<Converter> converters) {
+	public DBPFUnpackingTask(Collection<File> inputFiles, File outputFolder, Object project, List<Converter> converters) {
 		this.inputFiles.addAll(inputFiles);
 		this.outputFolder = outputFolder;
 		this.converters = converters;
-		this.project = project;
 		this.inputStream = null;
 	}
 	
-	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder, Project project, List<Converter> converters) {
+	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder, Object project, List<Converter> converters) {
 		this.inputStream = inputStream;
 		this.outputFolder = outputFolder;
 		this.converters = converters;
-		this.project = project;
 	}
 	
 	public void setNoJavaFX() {
@@ -143,11 +133,7 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 			super.updateProgress(workDone, max);
 		}
 	}
-	
-	public void setPackageSignature(boolean value) {
-		setPackageSignature = value && project != null;
-	}
-	
+
 	/**
 	 * Returns a list of all the converters that will be used when unpacking files.
 	 * On every file, if the converter {@link Converter.isDecoder()} method returns true, it will be used to decode the file.
@@ -177,8 +163,8 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	 * Returns the project that is being unpacked. This might be null if a file is being unpacked directly.
 	 * @return
 	 */
-	public Project getProject() {
-		return project;
+	public Object getProject() {
+		return null;
 	}
 	
 	/**
@@ -314,8 +300,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	@Override
 	public Exception call() throws Exception {
 		
-		MessageManager.get().postMessage(MessageType.BeforeDbpfUnpack, this);
-		
 		long initialTime = System.currentTimeMillis();
 		
 		if (inputStream != null) {
@@ -323,24 +307,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		}
 		else {
 			double progressFactor = 1.0;
-			
-			if (project != null) {
-				updateMessage("Clearing folder...");
-				try {
-					ProjectManager.get().initializeProject(project);
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-					for (File inputFile : inputFiles) {
-						failedDBPFs.add(inputFile);
-					}
-					return e;
-				}
-				incProgress(CLEAR_FOLDER_PROGRESS);
-				
-				progressFactor -= CLEAR_FOLDER_PROGRESS;
-			}
-			
 			
 			final HashMap<Integer, Set<ResourceKey>> writtenFiles = new HashMap<>();
 			boolean checkFiles = inputFiles.size() > 1;  // only check already existing files if we are unpacking more than one package at once
@@ -385,8 +351,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		// Ensure the taskbar progress is over
 		updateProgress(1.0, 1.0);
 		updateMessage("Finished");
-		
-		MessageManager.get().postMessage(MessageType.OnDbpfUnpack, this);
 		
 		return null;
 	}
@@ -446,14 +410,7 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 				
 				// Do not convert editor packages
 				if (groupID == 0x40404000 && item.name.getTypeID() == 0x00B1B104) {
-					if (setPackageSignature) {
-						for (PackageSignature entry : PackageSignature.values()) {
-							if (entry.getFileName() != null && hasher.fnvHash(entry.getFileName()) == instanceID) {
-								project.setPackageSignature(entry);
-								break;
-							}
-						}
-					}
+
 				}
 				else {
 					try {
