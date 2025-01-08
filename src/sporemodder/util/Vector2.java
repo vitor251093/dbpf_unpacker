@@ -29,29 +29,12 @@ import sporemodder.HashManager;
 
 @Structure(StructureEndian.LITTLE_ENDIAN)
 public class Vector2 {
-	/**
-	 * The structure metadata used for reading/writing this class.
-	 */
-	public static final StructureMetadata<Vector2> STRUCTURE_METADATA = StructureMetadata.generate(Vector2.class);
 
 	float x;
 	float y;
 	
 	public Vector2() {}
-	public Vector2(Vector2 other) {
-		set(other);
-	}
 
-	public Vector2(float x, float y) {
-		this.x = x;
-		this.y = y;
-	}
-	
-	public Vector2(float[] array) {
-		this.x = array[0];
-		this.y = array[1];
-	}
-	
 	public void set(int i, float value) {
 		if (i == 0) x = value;
 		else y = value;

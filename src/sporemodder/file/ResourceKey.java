@@ -35,8 +35,6 @@ import sporemodder.HashManager;
 @Structure(StructureEndian.LITTLE_ENDIAN)
 public class ResourceKey {
 
-	public static final StructureMetadata<ResourceKey> STRUCTURE_METADATA = StructureMetadata.generate(ResourceKey.class);
-	
 	private int instanceID = 0;
 	private int typeID = 0;
 	private int groupID = 0;

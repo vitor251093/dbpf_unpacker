@@ -24,45 +24,17 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.filestructures.Structure;
 import sporemodder.file.filestructures.StructureEndian;
-import sporemodder.file.filestructures.metadata.StructureMetadata;
 import sporemodder.HashManager;
 
 @Structure(StructureEndian.LITTLE_ENDIAN)
 public class Vector3 {
 	
-	/**
-	 * The structure metadata used for reading/writing this class.
-	 */
-	public static final StructureMetadata<Vector3> STRUCTURE_METADATA = StructureMetadata.generate(Vector3.class);
-
 	float x;
 	float y;
 	float z;
 	
 	public Vector3() {}
-	
-	public Vector3(Vector3 other) {
-		set(other);
-	}
 
-	public Vector3(float x, float y, float z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
-	
-	public Vector3(float[] array) {
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
-	}
-	
-	public Vector3(double[] array) {
-		this.x = (float) array[0];
-		this.y = (float) array[1];
-		this.z = (float) array[2];
-	}
-	
 	public void set(int i, float value) {
 		if (i == 0) x = value;
 		else if (i == 1) y = value;
@@ -155,6 +127,4 @@ public class Vector3 {
 		y = v.y;
 		z = v.z;
 	}
-
-	// Other operations...
 }

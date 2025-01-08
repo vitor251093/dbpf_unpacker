@@ -22,9 +22,7 @@ import java.io.File;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import javafx.scene.control.ContextMenu;
 import sporemodder.HashManager;
-import sporemodder.file.dbpf.DBPFPacker;
 
 
 public interface Converter {
@@ -42,54 +40,20 @@ public interface Converter {
 	 * @throws Exception
 	 */
 	public boolean decode(StreamReader stream, File outputFolder, ResourceKey key) throws Exception;
-	
-	/**
-	 * Converts the given file from a user-friendly format into the original format. If there is an error, it will be thrown in an exception.
-	 * The program must return whether the data was converted or not. If false is returned, the program will try other converters.
-	 * @param input The input file to be converted.
-	 * @param output The output stream where the converted data will be written.
-	 * @return Whether the data was converted (true) or a different converter should be used (false).
-	 * @throws Exception
-	 */
-	public boolean encode(File input, StreamWriter output) throws Exception;
-	
-	public boolean encode(File input, DBPFPacker packer, int groupID) throws Exception;
-	
+
 	/**
 	 * Whether this converter is a valid decoder (converting FROM the format) for the given package resource.
 	 * @param key
 	 * @return True if the {@link #decode(StreamReader, File, ResourceKey)} method can be called for this resource, false otherwise.
 	 */
 	public boolean isDecoder(ResourceKey key);
-	
-	/**
-	 * Whether this converter is a valid encoder (converting TO the format) for the given file.
-	 * @param file
-	 * @return True if the {@link #encode(File, StreamWriter)} method can be called for this file, false otherwise.
-	 */
-	public boolean isEncoder(File file);
-	
+
 	/**
 	 * Returns a name for this decoder, such as "Properties File (.prop)"
 	 * @return
 	 */
 	public String getName();
-	
-	/**
-	 * Whether this converter is enabled by default when unpacking a package file. Some converters
-	 * might consider it unnecessary for performance reasons.
-	 * @return
-	 */
-	public boolean isEnabledByDefault();
-	
-	/**
-	 * Returns the type ID that must be used when encoding this file. It receives the extension of the file being converted
-	 * as an argument.
-	 * @param extension The extension of the file that is being converted into the original format.
-	 * @return
-	 */
-	public int getOriginalTypeID(String extension);
-	
+
 	public static File getOutputFile(ResourceKey key, File folder, String extraExtension) {
 		HashManager hasher = HashManager.get();
 		

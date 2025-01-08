@@ -31,11 +31,6 @@ import sporemodder.HashManager;
 @Structure(StructureEndian.LITTLE_ENDIAN)
 public class ColorRGB {
 	
-	/**
-	 * The structure metadata used for reading/writing this class.
-	 */
-	public static final StructureMetadata<ColorRGB> STRUCTURE_METADATA = StructureMetadata.generate(ColorRGB.class);
-	
 	private float r;
 	private float g;
 	private float b;

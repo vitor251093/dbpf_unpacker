@@ -54,7 +54,6 @@ public class MessageManager extends AbstractManager {
 		 * all settings from the project have already been saved. 
 		 * <p>
 		 * The <code>args</code> of this message is
-		 * the {@link Project} object that is being saved (you can use {@link Project.getSettings()})
 		 */
 		OnProjectSettingsSave,
 		
@@ -62,7 +61,6 @@ public class MessageManager extends AbstractManager {
 		 * all settings from the project have already been loaded. 
 		 * <p>
 		 * The <code>args</code> of this message is
-		 * the {@link Project} object that is being loaded (you can use {@link Project.getSettings()})
 		 */
 		OnProjectSettingsLoad,
 		

@@ -29,11 +29,6 @@ public class Matrix {
 	// user should use getIdentity instead;
 	private Matrix() {};
 	
-	public Matrix(Matrix other)
-	{
-		copy(other);
-	}
-	
 	public static Matrix getIdentity() {
 		Matrix matrix = new Matrix();
 		matrix.m[0][0] = 1.0f;

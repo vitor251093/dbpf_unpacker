@@ -30,11 +30,6 @@ import sporemodder.HashManager;
 @Structure(StructureEndian.LITTLE_ENDIAN)
 public class Vector4 {
 	
-	/**
-	 * The structure metadata used for reading/writing this class.
-	 */
-	public static final StructureMetadata<Vector4> STRUCTURE_METADATA = StructureMetadata.generate(Vector4.class);
-
 	float x;
 	float y;
 	float z;
@@ -42,20 +37,6 @@ public class Vector4 {
 	
 	public Vector4() {}
 
-	public Vector4(float x, float y, float z, float w) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.w = w;
-	}
-	
-	public Vector4(float[] array) {
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
-		this.w = array[3];
-	}
-	
 	public Vector4 set(Vector4 vector) {
 		x = vector.x;
         y = vector.y;
