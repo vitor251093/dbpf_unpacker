@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Properties;
 
-import sporemodder.file.cnv.CnvUnit;
 import sporemodder.util.NameRegistry;
 
 /**
@@ -106,12 +105,6 @@ public class HashManager extends AbstractManager {
 		} catch (Exception e) {
 			throw new RuntimeException("The simulator attributes registry (reg_simulator.txt or reg_simulator_stub.txt) is corrupt or missing.");
 		}
-
-        try {
-            CnvUnit.loadNameRegistry(this, pathManager);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
         registries.put(fileRegistry.getFileName(), fileRegistry);
 		registries.put(typeRegistry.getFileName(), typeRegistry);
