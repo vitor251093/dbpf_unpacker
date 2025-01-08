@@ -23,7 +23,6 @@ import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.simulator.SimulatorClass;
 import sporemodder.util.NameRegistry;
 import sporemodder.util.Project;
 
@@ -52,8 +51,7 @@ public class Launcher {
 					EncodeCommand.class,
 					UnpackCommand.class,
 					PackCommand.class,
-					FindSpuiForControlIdCommand.class,
-					ScanSimulatorCommand.class
+					FindSpuiForControlIdCommand.class
 			})
 	public static class SMFXCommand implements Callable<Integer> {
 
@@ -393,21 +391,6 @@ public class Launcher {
 
 		@Override
 		public Integer call() throws Exception {
-			return 0;
-		}
-	}
-
-	@Command(name = "scan-simulator", description = "Scan file offsets of attributes in simulator data files", mixinStandardHelpOptions = true)
-	public static class ScanSimulatorCommand implements Callable<Integer> {
-		@Parameters(index = "0", description = "Input simulator data file")
-		private File inputFile;
-
-		@Override
-		public Integer call() throws Exception {
-			try (StreamReader stream = new MemoryStream(Files.readAllBytes(inputFile.toPath()))) {
-				SimulatorClass.scanClasses(stream);
-			}
-
 			return 0;
 		}
 	}
