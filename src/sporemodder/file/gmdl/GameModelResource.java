@@ -13,7 +13,6 @@ import sporemodder.file.ResourceKey;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.rw4.RWVertexElement;
-import sporemodder.file.shaders.ShaderData;
 import sporemodder.util.Transform;
 
 /**
@@ -193,10 +192,7 @@ public class GameModelResource {
 						}
 					}
 					else {
-						int dataSize = ShaderData.getDataSize(dataIndex);
-						byte[] data = new byte[dataSize];
-						stream.read(data);
-						shaderData.put(dataIndex, data);
+
 					}
 				}
 			}

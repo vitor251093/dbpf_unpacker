@@ -35,7 +35,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import sporemodder.HashManager;
 import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
@@ -143,56 +142,5 @@ public class BitmapConverter implements Converter {
 		}
 		return -1;
 	}
-	
-	@Override
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item) {
-		if (!item.isRoot()) {
-			
-			if (item.isMod() && isEncoder(item.getFile())) {
-				MenuItem menuItem = new MenuItem("Convert to BIT IMAGE");
-				menuItem.setMnemonicParsing(false);
-				menuItem.setOnAction(event -> {
-					// This is after isEncoder(), so we can assume it has extension
-					final String name = item.getName().substring(0, item.getName().lastIndexOf("."));
-					File file = new File(item.getFile().getParentFile(), name);
-					
-					boolean result = UIManager.get().tryAction(() -> {
-						try (FileStream stream = new FileStream(new File(item.getFile().getParentFile(), name), "rw")) {
-							encode(item.getFile(), stream);
-							
-							ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, name));
-						}
-					}, "Cannot encode file.");
-					if (!result) {
-						// Delete the file, as it hasn't been written properly
-						file.delete();
-					}
-				});
-				contextMenu.getItems().add(menuItem);
-			}
-			else {
-				ResourceKey key = ProjectManager.get().getResourceKey(item);
-				
-				if (isDecoder(key)) {
-					MenuItem menuItem = new MenuItem("Convert to PNG");
-					menuItem.setMnemonicParsing(false);
-					menuItem.setOnAction(event -> {
-						final File outputFile = Converter.getOutputFile(key, item.getFile().getParentFile(), "png");
-						boolean result = UIManager.get().tryAction(() -> {
-							try (FileStream stream = new FileStream(item.getFile(), "r")) {
-								decode(stream, outputFile, HashManager.get().getTypeHash(item.getSpecificExtension()));
-								
-								ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, outputFile.getName()));
-							}
-						}, "Cannot decode file.");
-						if (!result) {
-							// Delete the file, as it hasn't been written properly
-							outputFile.delete();
-						}
-					});
-					contextMenu.getItems().add(menuItem);
-				}
-			}
-		}
-	}
+
 }

@@ -26,7 +26,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.PathManager;
-import sporemodder.UIManager;
 import sporemodder.file.DocumentError;
 import sporemodder.file.argscript.ArgScriptArguments;
 import sporemodder.file.argscript.ArgScriptBlock;
@@ -331,7 +330,7 @@ public class CnvUnit {
 				
 						if (args.size() == 2) {
 							String[] originals = new String[3];
-							dialog.key.parse(args, 1, originals);
+							//dialog.key.parse(args, 1, originals);
 						}
 					}
 				}));
@@ -364,7 +363,7 @@ public class CnvUnit {
 						
 								if (args.size() == 2) {
 									String[] originals = new String[3];
-									response.key.parse(args, 1, originals);
+									//response.key.parse(args, 1, originals);
 								}
 							}
 						}));

@@ -28,7 +28,6 @@ import sporemodder.MessageManager;
 import sporemodder.MessageManager.MessageType;
 import sporemodder.PathManager;
 import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.util.GamePathConfiguration.GamePathType;
 
 public class Project {
@@ -255,9 +254,6 @@ public class Project {
 		} catch (IOException e) {
 			e.printStackTrace();
         }
-		
-		// Update the UI
-		UIManager.get().notifyUIUpdate(false);
 	}
 	
 	/**

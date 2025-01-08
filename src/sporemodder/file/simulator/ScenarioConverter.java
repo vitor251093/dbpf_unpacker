@@ -7,7 +7,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import sporemodder.HashManager;
 import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.dbpf.DBPFPacker;
@@ -88,36 +87,5 @@ public class ScenarioConverter implements Converter {
 		checkExtensions();
 		return TYPE_ID;
 	}
-	
-	@Override
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item) {
-		if (!item.isRoot()) {
-			
-			if (item.isMod() && isEncoder(item.getFile())) {
-			}
-			else {
-				ResourceKey key = ProjectManager.get().getResourceKey(item);
-				
-				if (isDecoder(key)) {
-					MenuItem menuItem = new MenuItem("Unpack scenario data");
-					menuItem.setMnemonicParsing(false);
-					menuItem.setOnAction(event -> {
-						final File outputFolder = Converter.getOutputFile(key, item.getFile().getParentFile(), "unpacked");
-						boolean result = UIManager.get().tryAction(() -> {
-							try (FileStream stream = new FileStream(item.getFile(), "r")) {
-								decode(stream, outputFolder);
-								
-								ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, outputFolder.getName()));
-							}
-						}, "Cannot decode file.");
-						if (!result) {
-							// Delete the file, as it hasn't been written properly
-							outputFolder.delete();
-						}
-					});
-					contextMenu.getItems().add(menuItem);
-				}
-			}
-		}
-	}
+
 }

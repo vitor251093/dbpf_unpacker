@@ -20,12 +20,8 @@ package sporemodder.file;
 
 import java.util.List;
 
-import sporemodder.view.syntax.SyntaxHighlighter;
-
-
 public interface DocumentErrorFactory {
 	public void process(String text);
 	public List<DocumentError> getErrors();
 	public List<DocumentError> getWarnings();
-	public SyntaxHighlighter getSyntaxHighlighter();
 }

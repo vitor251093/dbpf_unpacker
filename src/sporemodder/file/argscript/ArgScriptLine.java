@@ -122,7 +122,6 @@ public final class ArgScriptLine {
 	 * the keyword.
 	 * @param syntax
 	 * @param lineNumber
-	 * @param splitIndex
 	 * @param style
 	 */
 	public void addSyntaxForWord(SyntaxHighlighter syntax, int lineNumber, int wordIndex, String style) {

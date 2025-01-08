@@ -88,23 +88,23 @@ public class HashManager extends AbstractManager {
 		try {
 			fileRegistry.read(pathManager.getProgramFile(fileRegistry.getFileName()));
 		} catch (Exception e) {
-			UIManager.get().setInitializationError("The file name registry (reg_file.txt) is corrupt or missing.");
+			throw new RuntimeException("The file name registry (reg_file.txt) is corrupt or missing.");
 		}
 		try {
 			typeRegistry.read(pathManager.getProgramFile(typeRegistry.getFileName()));
 		} catch (Exception e) {
-			UIManager.get().setInitializationError("The types registry (reg_type.txt) is corrupt or missing.");
+			throw new RuntimeException("The types registry (reg_type.txt) is corrupt or missing.");
 		}
 		try {
 			propRegistry.read(pathManager.getProgramFile(propRegistry.getFileName()));
 		} catch (Exception e) {
-			UIManager.get().setInitializationError("The property registry (reg_property.txt) is corrupt or missing.");
+			throw new RuntimeException("The property registry (reg_property.txt) is corrupt or missing.");
 		}
 		try {
 			simulatorRegistry.read(pathManager.getProgramFile(simulatorRegistry.getFileName()));
 			simulatorRegistry.read(pathManager.getProgramFile("reg_simulator_stub.txt"));
 		} catch (Exception e) {
-			UIManager.get().setInitializationError("The simulator attributes registry (reg_simulator.txt or reg_simulator_stub.txt) is corrupt or missing.");
+			throw new RuntimeException("The simulator attributes registry (reg_simulator.txt or reg_simulator_stub.txt) is corrupt or missing.");
 		}
 
         try {

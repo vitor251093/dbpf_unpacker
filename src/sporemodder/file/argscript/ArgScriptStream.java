@@ -343,7 +343,7 @@ public class ArgScriptStream<T> {
 	}
 	
 	public void addDefaultParsers() {
-		DefaultParsers.addDefaultParsers(this);
+		//DefaultParsers.addDefaultParsers(this);
 	}
 	
 	public void setData(T data) {

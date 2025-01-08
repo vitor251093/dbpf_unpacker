@@ -50,7 +50,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import sporemodder.util.DownloadTask;
 import sporemodder.util.VersionInfo;
-import sporemodder.view.dialogs.ProgressDialogUI;
 
 public class UpdateManager {
 
@@ -97,93 +96,7 @@ public class UpdateManager {
     }
     
     private boolean showUpdateDialog(JSONObject release) {
-    	Dialog<ButtonType> dialog = new Dialog<ButtonType>();
-    	dialog.setTitle("Update available");
-    	
-    	DialogPane dialogPane = new DialogPane() {
-    		@Override
-    		protected Node createButtonBar() {
-    			ButtonBar buttonBar = (ButtonBar) super.createButtonBar();
-    			//buttonBar.setButtonOrder(ButtonBar.BUTTON_ORDER_NONE);
-    			
-    			Button button = new Button("View changelog");
-    			button.setOnAction(event -> {
-    				try {
-						Desktop.getDesktop().browse(new URI((String) release.get("html_url")));
-					} catch (IOException | URISyntaxException e1) {
-						e1.printStackTrace();
-					}
-    			});
-    			
-    			buttonBar.getButtons().add(button);
-
-    			return buttonBar;
-    		}
-    	};
-    	dialog.setDialogPane(dialogPane);
-    	
-    	Hyperlink hyperlink = new Hyperlink(release.getString("html_url"));
-    	hyperlink.setOnAction(event -> {
-    		try {
-				Desktop.getDesktop().browse(new URI(release.getString("html_url")));
-			} catch (IOException | URISyntaxException e1) {
-				e1.printStackTrace();
-			}
-    	});
-    			
-    	VBox pane = new VBox();
-    	pane.getChildren().add(new Label("A new update (\"" + release.get("tag_name") + "\") has been released. Do you want to download it?"));
-    	pane.getChildren().add(new Label("You can view the changelog in the following link:"));
-    	pane.getChildren().add(hyperlink);
-    	
-    	dialog.getDialogPane().setContent(pane);
-    	dialog.getDialogPane().getButtonTypes().addAll(ButtonType.NO, ButtonType.YES);
-    	
-    	AtomicBoolean closeProgram = new AtomicBoolean(false);
-    	
-    	if (UIManager.get().showDialog(dialog, false).orElse(ButtonType.NO) == ButtonType.YES) {
-    		JSONArray assets = release.getJSONArray("assets");
-    		JSONObject asset = null;
-    		int count = assets.length();
-    		for (int i = 0; i < count; ++i) {
-    			JSONObject object = assets.getJSONObject(i);
-    			if ("SporeModderFX.Updater.jar".equals(object.getString("name"))) {
-    				asset = object;
-    				break;
-    			}
-    		}
-    		
-    		try {
-				DownloadTask task = new DownloadTask(new URL(asset.getString("browser_download_url")));
-				
-				ProgressDialogUI progressUI = UIManager.get().loadUI("dialogs/ProgressDialogUI");
-				progressUI.setText("");
-				progressUI.getProgressBar().progressProperty().bind(task.progressProperty());
-	    		Dialog<ButtonType> progressDialog = progressUI.createDialog(task);
-	    		progressDialog.setTitle("Downloading updater");
-	    		
-	    		progressUI.setOnSucceeded(() -> {
-	    			if (!task.isCancelled()) UIManager.get().tryAction(() -> {
-						Runtime.getRuntime().exec("java -jar \"" + task.get().getAbsolutePath() + "\" \"" + PathManager.get().getProgramFolder().getAbsolutePath() + '"');
-		    			
-		    			closeProgram.set(true);
-	    			}, "Updater could not be executed.");
-	    		});
-	    		
-	    		progressUI.setOnFailed(() -> {
-					UIManager.get().showErrorDialog(task.getException(), "Fatal error", true);
-				});
-	    		
-	    		UIManager.get().showDialog(progressDialog, false);
-			} 
-    		catch (MalformedURLException | JSONException e) {
-				e.printStackTrace();
-			}
-    	}
-    	
-    	UIManager.get().setOverlay(false);
-    	
-    	return !closeProgram.get();
+    	return false;
     }
 
 	private static String executeGet(String request) throws IOException {

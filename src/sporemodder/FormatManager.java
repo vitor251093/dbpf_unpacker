@@ -43,7 +43,6 @@ import sporemodder.file.cell.CellStructureConverter;
 import sporemodder.file.cell.CellWorldConverter;
 import sporemodder.file.cnv.CnvConverter;
 import sporemodder.file.dbpf.DBPFConverter;
-import sporemodder.file.effects.EffectsConverter;
 import sporemodder.file.gait.GaitConverter;
 import sporemodder.file.lvl.LvlConverter;
 import sporemodder.file.otdb.PollenMetadataConverter;
@@ -52,7 +51,6 @@ import sporemodder.file.pctp.PCTPConverter;
 import sporemodder.file.prop.PropConverter;
 import sporemodder.file.raster.RasterConverter;
 import sporemodder.file.rw4.RenderWareConverter;
-import sporemodder.file.shaders.SmtConverter;
 import sporemodder.file.simulator.ScenarioConverter;
 import sporemodder.file.tlsa.TLSAConverter;
 
@@ -92,12 +90,10 @@ public class FormatManager extends AbstractManager {
 		converters.add(new BitmapConverter());
 		converters.add(new DBPFConverter());
 		converters.add(new AnimConverter());
-		converters.add(new SmtConverter());
 		converters.add(new RasterConverter());
 		converters.add(new CnvConverter());
 		converters.add(new PCTPConverter());
 		converters.add(new TLSAConverter());
-		converters.add(new EffectsConverter());
 		converters.add(new RenderWareConverter());
 		converters.add(new PropConverter());
 	}

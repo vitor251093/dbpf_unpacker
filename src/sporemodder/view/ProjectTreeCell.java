@@ -31,7 +31,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
-import sporemodder.EditorManager;
 import sporemodder.ProjectManager;
 import sporemodder.util.ProjectItem;
 
@@ -60,7 +59,6 @@ public class ProjectTreeCell extends TreeCell<ProjectItem> {
 			
 			if (e.getButton() == MouseButton.SECONDARY && !isEmpty() && getItem() != null) {
 				mgr.getContextMenu().hide();
-				mgr.generateContextMenu(getItem());
 				mgr.getContextMenu().show(this, e.getScreenX(), e.getScreenY());
 				
 				e.consume();
@@ -79,7 +77,7 @@ public class ProjectTreeCell extends TreeCell<ProjectItem> {
 					getTreeItem().setExpanded(!getTreeItem().isExpanded());
 				}
 				else if (projectBehaviour) {
-					EditorManager.get().moveFileToNewTab(item);
+
 				}
 								
 				event.consume();

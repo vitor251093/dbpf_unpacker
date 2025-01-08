@@ -66,12 +66,6 @@ import sporemodder.file.prop.PropertyList;
 import sporemodder.file.prop.XmlPropParser;
 import sporemodder.util.*;
 import sporemodder.view.ProjectTreeItem;
-import sporemodder.view.ProjectTreeUI;
-import sporemodder.view.dialogs.*;
-import sporemodder.view.editors.AbstractEditableEditor;
-import sporemodder.view.editors.AnimEditorItem;
-import sporemodder.view.editors.EffectEditorItem;
-import sporemodder.view.editors.ItemEditor;
 
 /**
  * The class that manages all the projects in the program and controls which one is the active.
@@ -109,9 +103,7 @@ public class ProjectManager extends AbstractManager {
 	private final List<ProjectItem> specialItems = new ArrayList<>(); 
 	
 	private ProjectTreeItem rootItem;
-	
-	private ProjectTreeUI treeUI;
-	
+
 	private ItemEditType itemEditType = ItemEditType.NONE;
 	/** For cell edit events, the item we are duplicating (if any). */
 	private ProjectItem toDuplicateItem;
@@ -145,11 +137,7 @@ public class ProjectManager extends AbstractManager {
 
 		itemFactories.add(new DefaultProjectItemFactory());
 		itemFactories.add(new OmitProjectItemFactory());
-		itemFactories.add(new ProjectNamesItemFactory());
 		
-		
-		specialItems.add(new EffectEditorItem());
-		specialItems.add(new AnimEditorItem());
 
 		// First load mod bundles, as it is necessary to exclude those when loading projects
 		modBundles.loadList();
@@ -239,7 +227,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public TreeView<ProjectItem> getTreeView() {
-		return treeUI.getTreeView();
+		return null;
 	}
 	
 	public List<ProjectItemFactory> getItemFactories() {
@@ -247,15 +235,15 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public boolean isShowModdedOnly() {
-		return treeUI.getShowModdedBox().isSelected();
+		return false;
 	}
 	
 	public void setShowModdedOnly(boolean value) {
-		treeUI.getShowModdedBox().setSelected(value);
+
 	}
 	
 	public BooleanProperty showModdedOnlyProperty() {
-		return treeUI.getShowModdedBox().selectedProperty();
+		return null;
 	}
 	
 	public boolean isShowingSearch() {
@@ -316,9 +304,7 @@ public class ProjectManager extends AbstractManager {
 			projectSearcher.setExtensiveSearch(true);
 			
 			projectSearcher.startSearch(rootItem);
-			
-			UIManager.get().notifyUIUpdate(false);
-			
+
 		}
 	}
 	
@@ -341,7 +327,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	private void startSearchFast() {
-		String text = treeUI.getSearchText();
+		String text = "";
 		if (!text.trim().isEmpty()) {
 			//TODO cancel existing search task
 			
@@ -355,8 +341,7 @@ public class ProjectManager extends AbstractManager {
 			
 //			rootItem.propagateMatchesSearch(true);
 			projectSearcher.startSearch(rootItem);
-			
-			UIManager.get().notifyUIUpdate(false);
+
 			
 		} else {
 			clearSearch();
@@ -374,219 +359,9 @@ public class ProjectManager extends AbstractManager {
 	public boolean isSearching() {
 		return projectSearcher.isSearching();
 	}
-	
-	public void setUI(ProjectTreeUI treeUI) {
-		this.treeUI = treeUI;
-		
-		// We add the special items to the UI
-		List<TreeItem<ProjectItem>> items = treeUI.getSpecialItems().getRoot().getChildren();
-		for (ProjectItem item : specialItems) {
-			items.add(new ProjectTreeItem(item));
-		}
-		
-		treeUI.getSpecialItems().setPrefHeight(treeUI.getSpecialItems().getFixedCellSize() * specialItems.size() + 5);
-		
-		
-		treeUI.getSearchProgressBar().progressProperty().bind(projectSearcher.progressProperty());
-		
-		projectSearcher.isSearchingProperty().addListener((obs, oldValue, isSearching) -> {
-			
-			this.treeUI.getTreeView().setDisable(isSearching);
-			this.treeUI.getTreeView().setCursor(isSearching ? Cursor.WAIT : null);
-			this.treeUI.getSearchField().setDisable(isSearching);
-			this.treeUI.changeSearchGraphic(isSearching);
-			
-			ProgressBar progressBar = this.treeUI.getSearchProgressBar();
-			progressBar.setDisable(!isSearching);
-			
-			if (isSearching) isShowingSearch.set(true);
-		});
-		
-		treeUI.getSearchField().setOnAction(event -> {
-			if (!isSearching()) startSearch(this.treeUI.getSearchField().getText());
-			else cancelSearch();
-		});
-		
-		treeUI.getSearchButton().setOnAction(event -> {
-			if (!isSearching()) startSearch(this.treeUI.getSearchField().getText());
-			else cancelSearch();
-		});
-		
-		treeUI.getSearchFastButton().setOnAction(event -> {
-			startSearchFast();
-		});
-		
-		treeUI.getTreeView().getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-			if (!disableTreeEvents && newValue != null) {
-				lastSelectedItem = (ProjectTreeItem) newValue;
-				
-				treeUI.getSpecialItems().getSelectionModel().select(null);
-				
-				UIManager.get().tryAction(() -> EditorManager.get().loadFile(newValue.getValue()), "Cannot load file \"" + newValue.getValue().getName() + "\".");
-			}
-		});
-		
-		treeUI.getSpecialItems().getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-			if (!disableTreeEvents && newValue != null) {
-				lastSelectedItem = (ProjectTreeItem) newValue;
-				
-				// If the new selected item is null, it means he user selected something in the tree view
-				treeUI.getTreeView().getSelectionModel().select(null);
-				
-				UIManager.get().tryAction(() -> EditorManager.get().loadFile(newValue.getValue()), "Cannot load file \"" + newValue.getValue().getName() + "\".");
-			}
-		});
-		
-		treeUI.getTreeView().setOnEditCommit((event) -> {
-			if (!disableTreeEvents) {
-				
-				ProjectTreeItem treeItem = (ProjectTreeItem) event.getTreeItem();
-				
-				if (itemEditType == ItemEditType.NEW_FILE || itemEditType == ItemEditType.NEW_FOLDER) {
-					// If we were setting the name of a new file, committing means creating that file
 
-					if (!UIManager.get().tryAction(() -> {
-						ProjectItem item = treeItem.getValue();
-						ProjectItem parentItem = treeItem.getParent().getValue();
-						
-						File parentFile = ensureModFolder(parentItem);
-						
-						String name = item.getName();
-						File file = new File(parentFile, name);
-						
-						if (toDuplicateItem == null) {
-							if (itemEditType == ItemEditType.NEW_FILE) {
-								file.createNewFile();
-							} else {
-								file.mkdir();
-							}
-						}
-						
-						item.setIsMod(true);
-						item.setFile(file);
-						
-						// ProjectTreeCell already checks that there are no other mod items with the same name
-						// so we can ignore the result of addModItem
-						addModItem(item);
-						reorderChildren(parentItem.getTreeItem());
-						
-						if (toDuplicateItem != null) {
-							copy(getFile(toDuplicateItem.getRelativePath()), file);
-						}
-						
-						// So it updates the isFolder variable
-						item.setFile(file);
-						
-						treeUI.getTreeView().getSelectionModel().select(treeItem);
-						
-						UIManager.get().notifyUIUpdate(false);
-						
-					}, "Cannot create new " + (itemEditType == ItemEditType.NEW_FILE ? "file." : "folder."))) {
-						
-						// If there was an error creating the file, at least delete the item
-						((ProjectTreeItem) treeItem.getParent()).getInternalChildren().remove(treeItem);
-					}
-				} else if (itemEditType == ItemEditType.RENAME) {
-					
-					UIManager.get().tryAction(() -> {
-						ProjectItem item = treeItem.getValue();
-						ProjectItem parentItem = treeItem.getParent().getValue();
-						
-						File parentFile = ensureModFolder(parentItem);
-						ProjectItem sourceItem = null;
-						
-						// If the item was source, we must restore that source item again
-						if (item.isSource()) {
-							// We can't use item.getRelativePath() because it would point to the renamed file!
-							sourceItem = new ProjectItem(getSourceFile(parentItem.getRelativePath() + File.separatorChar + item.getFile().getName()), item.getProject());
-							sourceItem.setIsSource(true);
-							sourceItem.setTreeItem(new ProjectTreeItem(sourceItem));
-							
-							disableTreeEvents = true;
-							parentItem.getTreeItem().getInternalChildren().add(sourceItem.getTreeItem());
-							disableTreeEvents = false;
-						}
-						
-						File file = new File(parentFile, item.getName());
-						
-						// 2 possibilities: either the file is mod and already exists in the mod project, or we have to copy it over 
-						if (item.isMod()) {
-							item.getFile().renameTo(file);
-							
-							// In source folders we must ensure that the original keeps its children,
-							// and copy all its files into the renamed folder
-							if (sourceItem != null && file.isDirectory()) {
-								sourceItem.getTreeItem().getInternalChildren().setAll(item.getTreeItem().getInternalChildren());
-								copyChildren(file, sourceItem.getTreeItem());
-								// Also notify the new item that it must reload its children
-								((ProjectTreeItem) sourceItem.getTreeItem()).requestReload();
-							}
-						} else {
-							// Copy the source file to the new, renamed location in the mod project
-							copy(item.getFile(), file);
-							// Tell the old item that it must reload its children (as they are now children of the new item)
-							if (sourceItem != null) {
-								((ProjectTreeItem) sourceItem.getTreeItem()).requestReload();
-							}
-						}
-						
-						
-						item.setIsMod(true);
-						item.setFile(file);
-						
-						// If it collides with a source file, addModItem will change it
-						item.setIsSource(false);
-						addModItem(item);
-						
-						// The easiest way to rearrange the mod/source status is just reloading the nodes
-						treeItem.requestReload();
-						
-						reorderChildren(parentItem.getTreeItem());
-						
-						EditorManager.get().reloadEditors();
-						
-						treeUI.getTreeView().getSelectionModel().select(treeItem);
-						// Select might not be enough to open it in the main editor
-						EditorManager.get().loadFile(item);
-						
-						UIManager.get().notifyUIUpdate(false);
-						
-					}, "Cannot rename item.");
-				}
-
-				itemEditType = ItemEditType.NONE;
-			}
-		});
-		
-		treeUI.getTreeView().setOnEditCancel((event) -> {
-			if (!disableTreeEvents) {
-				
-				if (itemEditType == ItemEditType.NEW_FILE || itemEditType == ItemEditType.NEW_FOLDER) {
-					// If we were setting the name of a new file/folder, canceling means deleting that item
-					((ProjectTreeItem) event.getTreeItem().getParent()).getInternalChildren().remove(event.getTreeItem());
-				}
-				
-				itemEditType = ItemEditType.NONE;
-			}
-		});
-		
-		contextMenu = new ContextMenu();
-		contextMenu.getStyleClass().add("project-tree-context-menu");
-		// Don't add the context menu to the tree view because we open it manually
-		
-		treeUI.getTreeView().addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
-			contextMenu.hide();
-		});
-		
-		showModdedOnlyProperty().addListener((obs, oldValue, newValue) -> {
-			projectSearcher.setOnlyModFiles(newValue);
-			if (activeProject != null) activeProject.setShowOnlyModded(newValue);
-			treeUI.getTreeView().scrollTo(treeUI.getTreeView().getRow(treeUI.getTreeView().getSelectionModel().getSelectedItem()));
-		});
-	}
-	
 	public void selectItem(ProjectItem item) {
-		selectItem(treeUI.getTreeView(), item);
+		selectItem(null, item);
 	}
 	
 	public void selectItem(TreeView<ProjectItem> treeView, ProjectItem item) {
@@ -603,7 +378,7 @@ public class ProjectManager extends AbstractManager {
 	 * @param item
 	 */
 	public void expandToItem(ProjectItem item) {
-		expandToItem(treeUI.getTreeView(), item);
+		expandToItem(null, item);
 	}
 	
 	/**
@@ -624,133 +399,6 @@ public class ProjectManager extends AbstractManager {
 	 */
 	public ContextMenu getContextMenu() {
 		return contextMenu;
-	}
-	
-	/**
-	 * Generates a context menu for the given item. The generated menu can be accessed with {@link #getContextMenu()}.
-	 * The menu will have items for general actions ("Copy name", "Remove", etc) and some specific items generated by the
-	 * supported converters in the {@link FormatManager}.
-	 * <p>
-	 * Special project items can also add buttons to this menu, since at the end of the method it calls {@link ProjectItem.generateContextMenu(ContextMenu)}
-	 * @param item
-	 */
-	public void generateContextMenu(ProjectItem item) {
-		MenuItem itemName = new MenuItem(item.getName());
-		itemName.setMnemonicParsing(false);
-		
-		MenuItem itemCopyName = new MenuItem("Copy name");
-		MenuItem itemCopyPath = new MenuItem("Copy file path");
-		MenuItem itemCopyKey = new MenuItem("Copy resource key");
-		MenuItem itemCopyID = new MenuItem("Copy ID");
-		
-		MenuItem itemNewFile = new MenuItem(item.isFolder() ? "Create new file" : "Create new file in same directory");
-		MenuItem itemNewFolder = new MenuItem(item.isFolder() ? "Create new folder" : "Create new folder in same directory");
-		MenuItem itemRename = new MenuItem("Rename");
-		MenuItem itemRemove = new MenuItem("Remove");
-		MenuItem itemModify = new MenuItem("Modify");
-		MenuItem itemImportFiles = new MenuItem("Import files...");
-		MenuItem itemRefresh = new MenuItem("Refresh");
-		
-		MenuItem itemCompare = new MenuItem("Compare");
-		MenuItem itemExploreSource = new MenuItem("Explore source folder");
-		MenuItem itemExploreMod = new MenuItem("Explore mod folder");
-		
-		itemCopyName.setOnAction(event -> {
-			ClipboardContent content = new ClipboardContent();
-			content.putString(item.getName());
-			
-			Clipboard.getSystemClipboard().setContent(content);
-		});
-		
-		itemCopyPath.setOnAction(event -> {
-			ClipboardContent content = new ClipboardContent();
-			content.putString(item.getFile().getAbsolutePath());
-			
-			Clipboard.getSystemClipboard().setContent(content);
-		});
-		
-		itemCopyKey.setOnAction(event -> {
-			String key = item.getName();
-			String[] splits = key.split("\\.");
-			// Remove extra extension such as prop_t
-			if (splits.length >= 3) {
-				key = splits[0] + "." + splits[1];
-			}
-			
-			TreeItem<ProjectItem> parentItem = item.getTreeItem().getParent();
-			// The root node does not count
-			if (parentItem != null && !parentItem.getValue().isRoot()) {
-				String parentName = parentItem.getValue().getName();
-				// The animations~ folder is usually not included
-				if (HashManager.get().getFileHash(parentName) != 0) {
-					key = parentItem.getValue().getName() + "!" + key;
-				}
-			}
-			
-			ClipboardContent content = new ClipboardContent();
-			content.putString(key);
-			
-			Clipboard.getSystemClipboard().setContent(content);
-		});
-		
-		itemCopyID.setOnAction(event -> {
-			int hash = HashManager.get().getFileHash(FileManager.removeExtension(item.getName()));
-			
-			ClipboardContent content = new ClipboardContent();
-			content.putString(HashManager.get().hexToString(hash));
-			
-			Clipboard.getSystemClipboard().setContent(content);
-		});
-		
-		itemName.setOnAction(event -> UIManager.get().tryAction(() -> selectItem(item), "Cannot select file"));
-		itemNewFile.setOnAction(event -> UIManager.get().tryAction(item::createNewFile, "Cannot create new file."));
-		itemNewFolder.setOnAction(event -> UIManager.get().tryAction(item::createNewFolder, "Cannot create new folder."));
-		itemRename.setOnAction(event -> UIManager.get().tryAction(item::renameItem, "Cannot rename item."));
-		itemRemove.setOnAction(event -> UIManager.get().tryAction(item::removeItem, "Cannot remove item."));
-		itemModify.setOnAction(event -> UIManager.get().tryAction(item::modifyItem, "Cannot modify item."));
-		itemImportFiles.setOnAction(event -> UIManager.get().tryAction(item::importFiles, "Cannot import files."));
-		itemRefresh.setOnAction(event -> UIManager.get().tryAction(item::refreshItem, "Cannot refresh item."));
-		
-		itemCompare.setOnAction(event -> UIManager.get().tryAction(item::compareItem, "Cannot compare item."));
-		itemExploreSource.setOnAction(event -> UIManager.get().tryAction(item::openSourceFolder, "Cannot open source folder."));
-		itemExploreMod.setOnAction(event -> UIManager.get().tryAction(item::openModFolder, "Cannot open mod folder."));
-		
-		contextMenu.getItems().clear();
-		contextMenu.getItems().addAll(itemName, new SeparatorMenuItem());
-		contextMenu.getItems().addAll(itemCopyName, itemCopyPath, itemCopyKey, itemCopyID, new SeparatorMenuItem());
-		contextMenu.getItems().addAll(itemNewFile, itemNewFolder, itemRename, itemRemove, itemModify, itemImportFiles, itemRefresh, new SeparatorMenuItem());
-		
-		for (Converter converter : FormatManager.get().getConverters()) {
-			try {
-				converter.generateContextMenu(contextMenu, item);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		item.generateContextMenu(contextMenu);
-		
-		
-		itemCopyPath.setDisable(item.getFile() == null);
-		
-		itemNewFile.setDisable(!item.canCreateNewFile());
-		itemNewFolder.setDisable(!item.canCreateNewFolder());
-		itemRename.setDisable(!item.canRenameItem());
-		itemRemove.setDisable(!item.canRemoveItem());
-		itemModify.setDisable(!item.canModifyItem());
-		itemImportFiles.setDisable(!item.canImportFiles());
-		itemRefresh.setDisable(!item.canRefreshItem());
-		
-		itemCompare.setDisable(!item.canCompareItem());
-		itemExploreSource.setDisable(!item.canOpenSourceFolder());
-		itemExploreMod.setDisable(!item.canOpenModFolder());
-		
-		int parentCount = 0;
-		TreeItem<ProjectItem> parent = item.getTreeItem();
-		while ((parent = parent.getParent()) != null) ++parentCount;
-		
-		// Root folder or something that is more than root/folder/file not allowed
-		itemCopyKey.setDisable(parentCount == 0 || parentCount > 2);
 	}
 
 	public List<ProjectPreset> getPresets() {
@@ -842,59 +490,7 @@ public class ProjectManager extends AbstractManager {
 	 * @param project
 	 */
 	public void setActive(Project project) {
-		//TODO do something if project is null?
-		// if (project == null)
-		
-		UIManager.get().showMainUI();
-		
-		UIManager.get().setTitleInfo(project.getName());
-		
-		// Disable searching things
-		clearSearch();
-		
-		if (activeProject != null) {
-			activeProject.saveSettings();
-		}
-		activeProject = project;
-		
-		projectSearcher.setProject(activeProject);
-		
-		// Update time and save it
-		activeProject.updateLastTimeUsed();
-		saveProjectsLastActiveTimes();
 
-		// If it doesn't have a mod info, generate it
-		ModBundle modBundle = activeProject.getParentModBundle();
-		if (modBundle != null) {
-			File modInfoFile = modBundle.getModInfoFile();
-			if (!modInfoFile.exists()) {
-				try {
-					modBundle.saveModInfo();
-				} catch (ParserConfigurationException | TransformerException e) {
-					System.err.println("Failed to generate ModInfo.xml for mod: " + modBundle.getName());
-					e.printStackTrace();
-				}
-            }
-		}
-
-		
-		// Project names registry
-		loadNamesRegistry();
-
-		// Update UI
-		ItemEditor activeEditor = EditorManager.get().getActiveEditor();
-		if (activeEditor != null) activeEditor.setActive(false);
-		EditorManager.get().clearTabs();
-		
-		UIManager.get().getUserInterface().setStatusFile(null);
-		UIManager.get().getUserInterface().setStatusInfo(null);
-		
-		treeUI.getSearchField().setText("");
-		treeUI.getShowModdedBox().setSelected(activeProject.isShowOnlyModded());
-		
-		refreshProjectTree();
-		
-		EditorManager.get().loadFixedTabs(project.getFixedTabPaths());
 	}
 	
 	public boolean loadNamesRegistry() {
@@ -937,34 +533,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public void refreshProjectTree() {
-		
-		ProjectTreeUI projectTree = UIManager.get().getUserInterface().getProjectTree();
-		TreeView<ProjectItem> treeView = projectTree.getTreeView();
-		
-		rootItem = new ProjectTreeItem(ProjectItem.createRoot(activeProject, activeProject.getName()));
-		rootItem.setPredicate((parent, value) -> {
-			if (isShowModdedOnly() && !value.isMod()) {
-				return false;
-			} else if (isShowingSearch.get() && !value.getTreeItem().getMatchesSearch()) {
-				return false;
-			} else {
-				return true;
-			}
-		}, showModdedOnlyProperty(), isShowingSearchProperty(), projectSearcher.isSearchingProperty());
-		
-		rootItem.predicateProperty().addListener((obs, oldValue, newValue) -> {
-			if (lastSelectedItem != null) {
-				treeUI.getTreeView().getSelectionModel().select(lastSelectedItem);
-			}
-		});
-		
-		loadItemFolder(activeProject, activeProject.getReferences(), rootItem);
-		
-		treeView.setRoot(rootItem);
-		rootItem.setExpanded(true);
-		
-		// Update the UI
-		UIManager.get().notifyUIUpdate(false);
+
 	}
 	
 	public void loadItemFolder(ProjectTreeItem parentItem) {
@@ -1036,14 +605,6 @@ public class ProjectManager extends AbstractManager {
 		
 		parentItem.setLoadedChildren(loadedItems.values());
 		
-		// Change the item of certian editors if it was loaded now
-		try {
-			EditorManager.get().reloadEditors();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		if (!searchedWords.isEmpty()) {
 			// Search the new nodes
 			projectSearcher.startSearch(parentItem);
@@ -1098,32 +659,7 @@ public class ProjectManager extends AbstractManager {
 	 * the operation is finished.
 	 */
 	public boolean pack(Project project, boolean storeDebugInformation) {
-		if (project == activeProject) {
-			ItemEditor editor = EditorManager.get().getActiveEditor();
-			if (editor != null && editor.isEditable()) {
-				AbstractEditableEditor editable = (AbstractEditableEditor)editor;
-				if (!editable.isSaved()) {
-					editable.setActive(false);
-					editable.setActive(true);
-				}
-			}
-		}
-		
-		File outputPackage = project.getOutputPackage();
-		if (outputPackage == null) {
-			UIManager.get().showDialog(new Alert(AlertType.ERROR, "The specified output folder does not exist."));
-			return false;
-		}
-		if (FileManager.get().isProtectedPackage(project.getOutputPackage())) {
-			Alert alert = new Alert(AlertType.WARNING, "The package name \"" + project.getPackageName() + "\" is protected and should not be packed. "
-					+ "Packing protected packages might cause irreversible changes to he game. Are you sure you want to proceed?", ButtonType.YES, ButtonType.CANCEL);
-			
-			if (UIManager.get().showDialog(alert).orElse(ButtonType.CANCEL) == ButtonType.CANCEL) {
-				return false;
-			}
-		}
-		
-		return PackProgressUI.show(project, storeDebugInformation);
+		return false;
 	}
 
 	/**
@@ -1157,9 +693,7 @@ public class ProjectManager extends AbstractManager {
 		
 		projects.remove(project);
 		projects.saveLastActiveTimesNoException();
-		
-		// Update the UI
-		UIManager.get().notifyUIUpdate(false);
+
 	}
 	
 	/**
@@ -1178,9 +712,7 @@ public class ProjectManager extends AbstractManager {
 		project.saveSettings();
 		
 		projects.add(project);
-		
-		// Update the UI
-		UIManager.get().notifyUIUpdate(false);
+
 	}
 
 	/**
@@ -1412,110 +944,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public void unpackPresets(List<ProjectPreset> presets, List<Converter> converters) {
-		
-		if (converters == null) {
-			converters = new ArrayList<Converter>();
-			for (Converter c : FormatManager.get().getConverters()) {
-				if (c.isEnabledByDefault()) converters.add(c);
-			}
-		}
-		
-		// We will use this to tell the user which files could not be unpacked (because they didn't exist)
-		List<String> failedPackages = new ArrayList<String>();
-		
-		for (int progressIndex = 0; progressIndex < presets.size(); progressIndex++) {
-			ProjectPreset preset = presets.get(progressIndex);
-			
-			Map<String, File> files = new LinkedHashMap<String, File>();
-			preset.getFiles(files);
-			
-			Map<File, String> fileToName = new HashMap<File, String>();
-			for (Map.Entry<String, File> entry : files.entrySet()) {
-				fileToName.put(entry.getValue(), entry.getKey());
-			}
-			
-			// Create the project or override the existing one
-			final Project project = getOrCreateProject(preset.getName());
-			project.setReadOnly(true);
-			// We don't need to save the settings here, as the unpacking task will call initializeProject()
-			// project.saveSettings();
-			
-			// The project is passed to set the 'packageSignature' setting, but we don't want that in presets
-			final DBPFUnpackingTask task = new DBPFUnpackingTask(files.values(), project.getFolder(), project, converters);
-			
-			task.setItemFilter(preset.getItemFilter());
-			
-			ProgressDialogUI progressUI = UIManager.get().loadUI("dialogs/ProgressDialogUI");
-			Dialog<ButtonType> progressDialog = progressUI.createDialog(task);
-			progressDialog.setTitle("Unpacking preset \"" + preset.getName() + "\" (" + (progressIndex+1) + " of " + presets.size() + ")");
-			
-			// Show progress
-			progressUI.getProgressBar().progressProperty().bind(task.progressProperty());
-			progressUI.getLabel().textProperty().bind(task.messageProperty());
-			
-			progressUI.setOnFailed(() -> {
-				UIManager.get().showErrorDialog(task.getException(), "Fatal error, file could not be unpacked", true);
-				
-				for (String str : fileToName.values()) {
-					failedPackages.add(str);
-				}
-			});
-			
-			UIManager.get().showDialog(progressDialog);
-			
-			if (task.isCancelled() || task.getState() == State.FAILED) {
-				// The task was cancelled, don't continue unpacking presets
-				return;
-			} else {
-				List<File> fails = task.getFailedDBPFs();
-				for (File fail : fails) {
-					failedPackages.add(fileToName.get(fail));
-				}
-			}
-		}
-		
-		VBox resultPane = new VBox(5);
-		resultPane.setPrefWidth(600);
-		resultPane.getStyleClass().add("dialog-content");
-		
-		Label infoLabel = new Label();
-		infoLabel.setWrapText(true);
-		resultPane.getChildren().add(infoLabel);
-		
-		if (failedPackages.isEmpty()) {
-			infoLabel.setText("Finished! All presets were unpacked successfully. Below you can check a list of all the packages they include:");
-		} else {
-			infoLabel.setText("Finished! Some packages could not be unpacked; below there is a list with the packages the presets contains, the ones in red were missing:");
-		}
-		
-		boolean openedByDefault = true;
-		for (ProjectPreset preset : presets) {
-			VBox pane = new VBox(10);
-			
-			for (String name : preset.getProjectNames()) {
-				Label lbl = new Label(name);
-				pane.getChildren().add(lbl);
-				
-				if (failedPackages.contains(name)) {
-					lbl.setStyle("-fx-background-color: red;");
-				}
-			}
-			
-			TitledPane presetPane = new TitledPane(preset.getName(), pane);
-			resultPane.getChildren().add(presetPane);
-			
-			if (openedByDefault) {
-				presetPane.setExpanded(true);
-				openedByDefault = false;
-			}
-		}
-		
-		Dialog<ButtonType> resultDialog = new Dialog<ButtonType>();
-		resultDialog.getDialogPane().setContent(resultPane);
-		resultDialog.getDialogPane().getButtonTypes().setAll(ButtonType.FINISH);
-		resultDialog.setTitle("Unpacking task finished");
-		
-		UIManager.get().showDialog(resultDialog);
+
 	}
 	
 	/**
@@ -1660,8 +1089,7 @@ public class ProjectManager extends AbstractManager {
 							newChildren.add(child);
 						} else {
 							// Do not add the item; we can stop the recursivity here because we will just remove all its children as well
-							EditorManager.get().removeEditor(item.getRelativePath());
-							continue; 
+							continue;
 						}
 					} else {
 						newChildren.add(child);
@@ -1680,38 +1108,8 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public boolean modifyItem(ProjectItem item) throws IOException {
-		if (!item.canModifyItem()) return false;
-		
-		String filePath = item.getRelativePath();
-		File sourceFile = getSourceFile(filePath);
-		// getModFile would return null because the file does not exist, so we do it manually
-		File modFile = new File(item.getProject().getFolder(), filePath);
-		
-		// Create any parent directories as needed
-		if (!modFile.getParentFile().exists()) {
-			modFile.getParentFile().mkdirs();
-		}
-		
-		copy(sourceFile, modFile);
-		
-		
-		// Update this node, its parents and its children so they are mods now
-		setParentsAsMod(item.getTreeItem(), modFile, true);
-		setChildrenAsMod(item.getTreeItem(), modFile, true);
-		
-		// Ensure the editor is pointing to the right file, and save any changes
-		ItemEditor editor = EditorManager.get().getEditor(filePath);
-		if (editor != null) {
-			editor.setDestinationFile(modFile);
-			editor.save();
-		}
-		
-		// Repaint tree
-		UIManager.get().getUserInterface().getProjectTree().getTreeView().refresh();
-		
-		UIManager.get().notifyUIUpdate(false);
-		
-		return true;
+
+		return false;
 	}
 	
 	private void removeEmptyNonSourceParents(ProjectTreeItem parent) {
@@ -1737,7 +1135,7 @@ public class ProjectManager extends AbstractManager {
 			
 			dialog.getDialogPane().getButtonTypes().setAll(ButtonType.YES, ButtonType.CANCEL);
 			
-			ButtonType result = UIManager.get().showDialog(dialog).orElse(ButtonType.CANCEL);
+			ButtonType result = null;
 			if (result == ButtonType.YES) {
 				dontAskAgain_removeItem = cb.isSelected();
 				MainApp.get().saveSettings();
@@ -1780,89 +1178,27 @@ public class ProjectManager extends AbstractManager {
 			item.setIsMod(false);
 			setParentsAsMod((ProjectTreeItem) item.getTreeItem().getParent(), file.getParentFile(), false);
 			setChildrenAsMod(item.getTreeItem(), file, false);
-			
-			EditorManager.get().reloadEditor(filePath);
+
 		}
 		
 		ProjectTreeItem parentItem = (ProjectTreeItem) item.getTreeItem().getParent();
 		if (parentItem != null) parentItem.invalidatePredicate();
-		
-		// Repaint tree
-		UIManager.get().getUserInterface().getProjectTree().getTreeView().refresh();
-		
-		UIManager.get().notifyUIUpdate(false);
-		
+
 		return true;
 	}
 	
 	public boolean createNewFile(ProjectItem requestedItem) {
-		if (!requestedItem.canCreateNewFile()) return false;
-		
-		// If the user clicked on a file, create the new file in the folder that contains it
-		ProjectTreeItem directory = requestedItem.isFolder() ? requestedItem.getTreeItem() : (ProjectTreeItem) requestedItem.getTreeItem().getParent();
-		
-		// We don't use a factory here, because by default the user can only create standard items
-		ProjectItem newItem = new ProjectItem("item_name.prop.prop_t", activeProject);
-		newItem.setIsMod(true);
-		newItem.setTreeItem(new ProjectTreeItem(newItem));
-		
-		// + 1 because shifting the focused item causes cancelEdit
-		int index = requestedItem.isFolder() ? 0 : ((ProjectTreeItem) requestedItem.getTreeItem().getParent()).getInternalChildren().indexOf(requestedItem.getTreeItem()) + 1;
-		
-		// Before creating the item, ensure its children are visible
-		directory.setExpanded(true);
-		
-		directory.getInternalChildren().add(index, newItem.getTreeItem());
-		
-		// Layout tree, otherwise we won't be able to edit the tree cell, a bug apparently https://bugs.openjdk.java.net/browse/JDK-8089497
-		treeUI.getTreeView().layout();
-		
-		// Tell we are editing a new file
-		toDuplicateItem = null;
-		itemEditType =  ItemEditType.NEW_FILE;
-		treeUI.getTreeView().edit(newItem.getTreeItem());
-		
+
 		return true;
 	}
 	
 	public boolean createNewFolder(ProjectItem requestedItem) {
-		if (!requestedItem.canCreateNewFolder()) return false;
-		
-		// If the user clicked on a file, create the new file in the folder that contains it
-		ProjectTreeItem directory = requestedItem.isFolder() ? requestedItem.getTreeItem() : (ProjectTreeItem) requestedItem.getTreeItem().getParent();
-		
-		// We don't use a factory here, because by default the user can only create standard items
-		ProjectItem newItem = new ProjectItem("folder_name", activeProject);
-		newItem.setIsMod(true);
-		newItem.setTreeItem(new ProjectTreeItem(newItem));
-		
-		// + 1 because shifting the focused item causes cancelEdit
-		int index = requestedItem.isFolder() ? 0 : ((ProjectTreeItem) requestedItem.getTreeItem().getParent()).getInternalChildren().indexOf(requestedItem.getTreeItem()) + 1;
-		
-		// Before creating the item, ensure its children are visible
-		directory.setExpanded(true);
-		
-		directory.getInternalChildren().add(index, newItem.getTreeItem());
-		
-		// Layout tree, otherwise we won't be able to edit the tree cell, a bug apparently https://bugs.openjdk.java.net/browse/JDK-8089497
-		treeUI.getTreeView().layout();
-		
-		// Tell we are editing a new file
-		toDuplicateItem = null;
-		itemEditType =  ItemEditType.NEW_FOLDER;
-		treeUI.getTreeView().edit(newItem.getTreeItem());
-		
+
 		return true;
 	}
 	
 	public boolean renameItem(ProjectItem requestedItem) {
-		if (!requestedItem.canRenameItem()) return false;
-		
-		// Tell we are editing a new file
-		toDuplicateItem = null;
-		itemEditType =  ItemEditType.RENAME;
-		treeUI.getTreeView().edit(requestedItem.getTreeItem());
-		
+
 		return true;
 	}
 	
@@ -1873,34 +1209,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public boolean duplicateItem(ProjectItem item) {
-		if (!item.canDuplicateItem()) return false;
-		
-		// Create the new file in the folder that contains it
-		ProjectTreeItem directory = (ProjectTreeItem) item.getTreeItem().getParent();
-		
-		// We don't use a factory here, because by default the user can only create standard items
-		ProjectItem newItem = new ProjectItem(getDuplicatedItemName(item.getName()), activeProject);
-		
-		newItem.setIsMod(true);
-		newItem.setTreeItem(new ProjectTreeItem(newItem));
-		
-		// + 1 because shifting the focused item causes cancelEdit
-		int index = item.isFolder() ? 0 : ((ProjectTreeItem) item.getTreeItem().getParent()).getInternalChildren().indexOf(item.getTreeItem()) + 1;
-		
-		// Before creating the item, ensure its children are visible
-		directory.setExpanded(true);
-		
-		directory.getInternalChildren().add(index, newItem.getTreeItem());
-		
-		// Layout tree, otherwise we won't be able to edit the tree cell, a bug apparently https://bugs.openjdk.java.net/browse/JDK-8089497
-		treeUI.getTreeView().layout();
-		
-		//TODO
-		// Tell we are editing a new file
-		toDuplicateItem = item;
-		itemEditType =  ItemEditType.NEW_FILE;
-		treeUI.getTreeView().edit(newItem.getTreeItem());
-		
+
 		return true;
 	}
 	
@@ -2018,48 +1327,7 @@ public class ProjectManager extends AbstractManager {
 	}
 	
 	public boolean importFiles(ProjectItem item) throws IOException {
-		if (!item.canImportFiles()) return false;
-		
-		UIManager.get().setOverlay(true);
-		FileChooser chooser = new FileChooser();
-		chooser.getExtensionFilters().add(FileManager.FILEFILTER_ALL);
-		List<File> result = chooser.showOpenMultipleDialog(UIManager.get().getScene().getWindow());
-		UIManager.get().setOverlay(false);
-		
-		HashManager.get().setUpdateProjectRegistry(true);
-		
-		if (result != null && !result.isEmpty()) {
-			// If the user clicked on a file, import the files in the folder that contains it
-			ProjectTreeItem treeItem = item.isFolder() ? item.getTreeItem() : (ProjectTreeItem)item.getTreeItem().getParent();
-			item = treeItem.getValue();
-			
-			if (!item.isMod()) {
-				ensureModFolder(item);
-				// We have selected a folder, which have no editor, no point on doing this
-				// EditorManager.get().reloadEditor(filePath);
-			}
-			
-			File destFolder = item.getFile();
-			for (File file : result) {
-				importFile(file, destFolder);
-			}
-			
-			// The easiest way to rearrange the mod/source status is just reloading the nodes
-			treeItem.requestReload();
-			// If it is expanded we need to ensure its children are reloaded
-			if (treeItem.isExpanded()) {
-				treeItem.setExpanded(false);
-				treeItem.setExpanded(true);
-			}
-			
-			// Repaint tree
-			UIManager.get().getUserInterface().getProjectTree().getTreeView().refresh();
-			
-			UIManager.get().notifyUIUpdate(false);
-		}
-		
-		HashManager.get().setUpdateProjectRegistry(false);
-		
+
 		return true;
 	}
 	
@@ -2084,7 +1352,6 @@ public class ProjectManager extends AbstractManager {
 			disableTreeEvents = true;
 			((ProjectTreeItem) treeItem.getParent()).getInternalChildren().remove(treeItem);
 			disableTreeEvents = false;
-			EditorManager.get().removeEditor(relativePath);
 			return true;
 		}
 		
@@ -2103,196 +1370,29 @@ public class ProjectManager extends AbstractManager {
 			treeItem.setExpanded(false);
 			treeItem.setExpanded(true);
 		}
-		
-		// Repaint tree
-		UIManager.get().getUserInterface().getProjectTree().getTreeView().refresh();
-		
-		UIManager.get().notifyUIUpdate(false);
-		
 		return true;
 	}
 	
 	public boolean importOldProject() {
-		UIManager.get().setOverlay(true);
-		
-		DirectoryChooser chooser = new DirectoryChooser();
-		File sourceFolder = chooser.showDialog(UIManager.get().getScene().getWindow());
-		
-		if (sourceFolder == null) {
-			UIManager.get().setOverlay(false);
-			return false;
-		}
-		
-		if (!new File(sourceFolder, "config.properties").exists()) {
-			Alert alert = new Alert(AlertType.WARNING, "The selected folder \"" + sourceFolder + "\" does not look like a project. Are you sure you want to continue?", ButtonType.YES, ButtonType.CANCEL);
-			if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.CANCEL) {
-				UIManager.get().setOverlay(false);
-				return false;
-			}
-		}
-		
-		String projectName = sourceFolder.getName();
-		
-		if (hasProject(projectName)) {
-			Alert alert = new Alert(AlertType.WARNING, "A project with this name already exists. Do you want to replace all its contents?", ButtonType.YES, ButtonType.CANCEL);
-			if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.CANCEL) {
-				UIManager.get().setOverlay(false);
-				return false;
-			}
-		}
-		
-		Project project = getOrCreateProject(projectName);
-		if (!UIManager.get().tryAction(() -> initializeProject(project),
-				"Cannot initialize project. Try manually deleting the project folder in SporeModder FX\\Projects\\")) {
-			UIManager.get().setOverlay(false);
-			return false;
-		}
-		
-		HashManager hasher = HashManager.get();
-		hasher.setUpdateProjectRegistry(true);
-		hasher.getProjectRegistry().clear();
-		hasher.setExtraRegistry(new NameRegistry(hasher, null, null));
-		
-		// Use the old registries to load files, if possible
-		NameRegistry fileRegistry = null;
-		NameRegistry propRegistry = null;
-		NameRegistry typeRegistry = null;
-		
-		try {
-			File registryFile = new File(sourceFolder.getParentFile(), "reg_file.txt");
-			if (registryFile.exists()) {
-				fileRegistry = new NameRegistry(hasher, "Old SporeModder File Names", registryFile.getName());
-				fileRegistry.read(registryFile);
-			}
-			registryFile = new File(sourceFolder.getParentFile(), "reg_properties.txt");
-			if (registryFile.exists()) {
-				propRegistry = new NameRegistry(hasher, "Old SporeModder Properties", registryFile.getName());
-				propRegistry.read(registryFile);
-			}
-			registryFile = new File(sourceFolder.getParentFile(), "reg_type.txt");
-			if (registryFile.exists()) {
-				typeRegistry = new NameRegistry(hasher, "Old SporeModder Types", registryFile.getName());
-				typeRegistry.read(registryFile);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		ImportProjectTask task = new ImportProjectTask(project, sourceFolder, fileRegistry, propRegistry, typeRegistry);
-		task.showProgressDialog();
-		
-		hasher.replaceRegistries(null, null, null);
-		hasher.setUpdateProjectRegistry(false);
-		saveNamesRegistry(project);
-		hasher.getProjectRegistry().clear();
-		hasher.setExtraRegistry(null);
-		
-		UIManager.get().setOverlay(false);
-		
-		setActive(project);
-		
+
 		return true;
 	}
 	
 	public boolean addExternalProject() {
-		UIManager.get().setOverlay(true);
-		
-		DirectoryChooser chooser = new DirectoryChooser();
-		File sourceFolder = chooser.showDialog(UIManager.get().getScene().getWindow());
-		
-		if (sourceFolder == null) {
-			UIManager.get().setOverlay(false);
-			return false;
-		}
-		
-		boolean loadedCorrectly = true;
 
-		final Project project = new Project(sourceFolder.getName(), sourceFolder, null);
-		project.loadSettings();
-		if (ProjectSettingsUI.show(project, false)) {
-			File linkFile = new File(PathManager.get().getProjectsFolder(), project.getName());
-			
-			if (!UIManager.get().tryAction(() -> {
-				Files.write(linkFile.toPath(), Collections.singletonList(sourceFolder.getAbsolutePath()), StandardOpenOption.CREATE_NEW);
-				project.setExternalLinkFile(linkFile);
-				project.saveSettings();
-				
-				projects.add(project);
-			}, "Error adding external project")) {
-				loadedCorrectly = false;
-			}
-		}
-		else {
-			loadedCorrectly = false;
-		}
-		
-		UIManager.get().setOverlay(false);
-		
-		if (loadedCorrectly) {
-			setActive(project);
-			
-			// Update the UI
-			UIManager.get().notifyUIUpdate(false);
-		}
-		
 		return true;
 	}
 	
 	public void showFirstTimeDialog() {
-		UnpackPresetsUI.showAsOptional("In order to start modding Spore, you'll need to unpack the game files. You can choose from the presets below. We have already checked the "
-				+ "'Spore (Game & Graphics)' because it is what you will need for most of the things you want to modify.", false);
+
 	}
 	
 	public boolean showSaveAsModDialog() {
-		if (!dontAskAgain_saveAsMod) {
-			Dialog<ButtonType> dialog = new Dialog<ButtonType>();
-			dialog.setTitle("Confirm action");
-			
-			CheckBox cb = new CheckBox("Don't ask me again.");
-			
-			dialog.getDialogPane().setHeaderText("This file has been edited. Do you want to include it into your mod? If you press no, all changes will be discarded.");
-			dialog.getDialogPane().setContent(cb);
-			
-			dialog.getDialogPane().getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
-			
-			ButtonType result = UIManager.get().showDialog(dialog).orElse(ButtonType.NO);
-			if (result == ButtonType.YES) {
-				dontAskAgain_saveAsMod = cb.isSelected();
-				MainApp.get().saveSettings();
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return true;
-		}
+		return false;
 	}
 	
 	public boolean showSaveDialog() {
-		if (closeEditedFileDecision == CloseEditedFileDecision.ASK) {
-			Dialog<ButtonType> dialog = new Dialog<>();
-			dialog.setTitle("Confirm action");
-
-			CheckBox cb = new CheckBox("Remember my decision.");
-
-			dialog.getDialogPane().setHeaderText("This file has unsaved changes. Do you want to save it? If you press no, all changes will be discarded.");
-			dialog.getDialogPane().setContent(cb);
-
-			dialog.getDialogPane().getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
-
-			ButtonType result = UIManager.get().showDialog(dialog).orElse(ButtonType.NO);
-			if (result == ButtonType.YES) {
-				closeEditedFileDecision = CloseEditedFileDecision.SAVE;
-				MainApp.get().saveSettings();
-				return true;
-			} else {
-				closeEditedFileDecision = CloseEditedFileDecision.IGNORE;
-				MainApp.get().saveSettings();
-				return false;
-			}
-		} else {
-			return closeEditedFileDecision == CloseEditedFileDecision.SAVE;
-		}
+		return false;
 	}
 
 	private void createNewProjectCommon(ModBundle modBundle, String projectName, List<ProjectPreset> presets) throws ParserConfigurationException, TransformerException, IOException {
@@ -2324,10 +1424,6 @@ public class ProjectManager extends AbstractManager {
 		initializeModBundle(modBundle);
 		createNewProjectCommon(modBundle, projectName, presets);
 
-		// Initialize git repository, but don't try if git is not installed
-		if (GitHubManager.get().hasGitInstalled()) {
-			initializeModBundleGit(modBundle);
-		}
 	}
 
 	public void createNewProjectInMod(ModBundle modBundle, String projectName, List<ProjectPreset> presets) throws ParserConfigurationException, IOException, TransformerException {

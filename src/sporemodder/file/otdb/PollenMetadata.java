@@ -338,14 +338,14 @@ public class PollenMetadata {
 		stream.addParser("assetKey", ArgScriptParser.create((parser, line) -> {
 			if (line.getArguments(args, 1)) {
 				String[] originals = new String[3];
-				assetKey.parse(args, 0, originals);
+				//assetKey.parse(args, 0, originals);
 				line.addHyperlinkForArgument("key", originals, 0);
 			}
 		}));
 		stream.addParser("parentAssetKey", ArgScriptParser.create((parser, line) -> {
 			if (line.getArguments(args, 1)) {
 				String[] originals = new String[3];
-				parentAssetKey.parse(args, 0, originals);
+				//parentAssetKey.parse(args, 0, originals);
 				line.addHyperlinkForArgument("key", originals, 0);
 			}
 		}));

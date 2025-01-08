@@ -32,7 +32,6 @@ import sporemodder.file.rw4.Direct3DEnums.D3DPRIMITIVETYPE;
 import sporemodder.file.rw4.Direct3DEnums.D3DRenderStateType;
 import sporemodder.file.rw4.Direct3DEnums.D3DSamplerStateType;
 import sporemodder.file.rw4.Direct3DEnums.D3DTextureStageStateType;
-import sporemodder.file.shaders.ShaderData;
 import sporemodder.util.ColorRGB;
 import sporemodder.util.ColorRGBA;
 
@@ -638,7 +637,7 @@ public class MaterialStateCompiler {
 		if (!shaderData.isEmpty()) {
 			writer.blankLine();
 			for (ShaderDataEntry sd : shaderData) {
-				writer.command("shaderData").arguments(ShaderData.getName(sd.index));
+				//writer.command("shaderData").arguments(ShaderData.getName(sd.index));
 				for (int i : sd.data) {
 					writer.arguments(HashManager.get().formatInt32(i));
 				}

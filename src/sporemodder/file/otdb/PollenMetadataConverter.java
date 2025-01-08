@@ -7,7 +7,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import sporemodder.HashManager;
 import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.file.Converter;
 import sporemodder.file.DocumentException;
 import sporemodder.file.ResourceKey;
@@ -111,56 +110,5 @@ public class PollenMetadataConverter implements Converter {
 		checkExtensions();
 		return TYPE_ID;
 	}
-	
-	@Override
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item) {
-		if (!item.isRoot()) {
-			
-			if (item.isMod() && isEncoder(item.getFile())) {
-				MenuItem menuItem = new MenuItem("Convert to POLLEN_METADATA");
-				menuItem.setMnemonicParsing(false);
-				menuItem.setOnAction(event -> {
-					// This is after isEncoder(), so we can assume it has extension
-					final String name = item.getName().substring(0, item.getName().lastIndexOf("."));
-					File file = new File(item.getFile().getParentFile(), name);
-					
-					boolean result = UIManager.get().tryAction(() -> {
-						try (FileStream stream = new FileStream(new File(item.getFile().getParentFile(), name), "rw")) {
-							encode(item.getFile(), stream);
-							
-							ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, name));
-						}
-					}, "Cannot encode file.");
-					if (!result) {
-						// Delete the file, as it hasn't been written properly
-						file.delete();
-					}
-				});
-				contextMenu.getItems().add(menuItem);
-			}
-			else {
-				ResourceKey key = ProjectManager.get().getResourceKey(item);
-				
-				if (isDecoder(key)) {
-					MenuItem menuItem = new MenuItem("Convert to POLLEN_METADATA_T");
-					menuItem.setMnemonicParsing(false);
-					menuItem.setOnAction(event -> {
-						final File outputFile = Converter.getOutputFile(key, item.getFile().getParentFile(), "pollen_metadata_t");
-						boolean result = UIManager.get().tryAction(() -> {
-							try (FileStream stream = new FileStream(item.getFile(), "r")) {
-								decode(stream, outputFile);
-								
-								ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, outputFile.getName()));
-							}
-						}, "Cannot decode file.");
-						if (!result) {
-							// Delete the file, as it hasn't been written properly
-							outputFile.delete();
-						}
-					});
-					contextMenu.getItems().add(menuItem);
-				}
-			}
-		}
-	}
+
 }

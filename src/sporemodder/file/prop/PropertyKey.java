@@ -144,7 +144,7 @@ public class PropertyKey extends BaseProperty {
 			if (line.getArguments(args, 2)) {
 				String[] originals = new String[3];
 				ResourceKey key = new ResourceKey();
-				key.parse(args, 1, originals);
+				//key.parse(args, 1, originals);
 				parser.getData().add(args.get(0), new PropertyKey(key));
 				
 				line.addHyperlinkForArgument("key", originals, 1);

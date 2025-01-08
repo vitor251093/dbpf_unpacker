@@ -30,24 +30,13 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
-import sporemodder.ProjectManager;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamWriter;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.VBox;
 import sporemodder.HashManager;
-import sporemodder.UIManager;
 import sporemodder.file.prop.PropertyList;
 import sporemodder.file.prop.XmlPropParser;
-import sporemodder.view.dialogs.ProgressDialogUI;
 
 public class ImportProjectTask extends ResumableTask<Void> {
 	private Project destination;
@@ -133,7 +122,7 @@ public class ImportProjectTask extends ResumableTask<Void> {
 						
 						PropertyList list = new PropertyList();
 						list.read(stream);
-						list.toArgScript().write(dest.toFile());
+						//list.toArgScript().write(dest.toFile());
 						
 						stream.close();
 					} 
@@ -174,76 +163,10 @@ public class ImportProjectTask extends ResumableTask<Void> {
 	}
 	
 	public void showProgressDialog() {
-		ProgressDialogUI progressUI = UIManager.get().loadUI("dialogs/ProgressDialogUI");
-		
-		Dialog<ButtonType> progressDialog = progressUI.createDialog(this);
-		progressDialog.setTitle("Importing \"" + destination.getName() + "\"");
-		progressDialog.getDialogPane().setContent(progressUI.getMainNode());
-		progressDialog.getDialogPane().getButtonTypes().setAll(ButtonType.CANCEL);
-		
-		progressUI.setOnCancelled(() -> {
-			if (failedFiles.isEmpty()) {
-				Alert alert = new Alert(AlertType.INFORMATION, "Import finished", ButtonType.OK);
-				alert.setContentText("Successfully imported in " + (ellapsedTime / 1000.0f) + " seconds.");
-				UIManager.get().showDialog(alert);
-			}
-			else {
-				showErrorDialog(sourceFolder.toPath());
-			}
-		});
-		
-		progressUI.setOnSucceeded(() -> {
-			File settingsFile = new File(sourceFolder, "config.properties");
-			if (settingsFile.exists()) {
-				try {
-					Files.copy(new File(destination.getFolder(), Project.SETTINGS_FILE_NAME).toPath(), settingsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					destination.loadSettings();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			destination.updateLastTimeUsed();
-			ProjectManager.get().saveProjectsLastActiveTimes();
-		});
-		
-		progressUI.setOnFailed(() -> {
-			UIManager.get().showErrorDialog(getException(), "Fatal error, project could not be imported", true);
-		});
-		
-		// Show progress
-		progressUI.getProgressBar().progressProperty().bind(progressProperty());
-		progressUI.getLabel().textProperty().bind(messageProperty());
-		
-		UIManager.get().showDialog(progressDialog);
+
 	}
 	
 	private void showErrorDialog(Path source) {
-		Alert alert = new Alert(AlertType.ERROR, "Import finished", ButtonType.OK);
-		
-		alert.setContentText("There were errors on " + failedFiles.size() + " files, which were not imported.");
-		
-		VBox pane = new VBox();
-		ScrollPane scrollPane = new ScrollPane(pane);
-		scrollPane.setMaxHeight(500);
-		scrollPane.setPrefHeight(500);
-		
-		for (Map.Entry<Path, Exception> entry : failedFiles.entrySet()) {
-			
-			Button button = new Button(source.relativize(entry.getKey()).toString());
-			button.setMnemonicParsing(false);
-			button.getStyleClass().setAll("button-no-background", "hyperlink");
-			pane.getChildren().add(button);
-			
-			button.setOnAction(event -> {
-				UIManager.get().showErrorDialog(entry.getValue(), null, false);
-			});
-		}
-		
-		alert.getDialogPane().setExpandableContent(scrollPane);
-		
-		scrollPane.requestFocus();
-		
-		UIManager.get().showDialog(alert, false);
+
 	}
 }

@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import sporemodder.UIManager.UILoadMessage;
 import sporemodder.util.MessageListener;
 
 public class MessageManager extends AbstractManager {

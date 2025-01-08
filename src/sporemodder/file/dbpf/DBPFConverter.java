@@ -7,23 +7,10 @@ import java.util.List;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.MenuItem;
-import sporemodder.FileManager;
 import sporemodder.FormatManager;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
-import sporemodder.util.ProjectItem;
-import sporemodder.view.dialogs.PackProgressUI;
-import sporemodder.view.dialogs.ProgressDialogUI;
-import sporemodder.view.dialogs.UnpackPackageUI;
 
 public class DBPFConverter implements Converter {
 	
@@ -128,97 +115,12 @@ public class DBPFConverter implements Converter {
 	
 	private void unpackDialog(File inputFile, File outputFile) throws Exception {
 		try (StreamReader stream = new FileStream(inputFile, "r")) {
-			DBPFUnpackingTask task = createUnpackTask(stream, outputFile);
-			
-			ProgressDialogUI progressUI = UIManager.get().loadUI("dialogs/ProgressDialogUI");
-			Dialog<ButtonType> progressDialog = progressUI.createDialog(task);
-			progressDialog.setTitle("Unpacking " + inputFile.getName());
-			
-			progressUI.setOnSucceeded(() -> {
-				if (task.getValue() != null) {
-					UIManager.get().showErrorDialog(task.getValue(), "Could not unpack file.", false);
-				}
-				else if (task.getExceptions().isEmpty()) {
-					Alert alert = new Alert(AlertType.INFORMATION, "Unpack finished", ButtonType.OK);
-					alert.setContentText("Successfully unpacked in " + (task.getEllapsedTime() / 1000.0f) + " seconds.");
-					UIManager.get().showDialog(alert);
-				}
-				else {
-					UnpackPackageUI.showErrorDialog(task);
-				}
-			});
-			
-			progressUI.setOnFailed(() -> {
-				UIManager.get().showErrorDialog(task.getException(), "Fatal error, file could not be unpacked", true);
-			});
-			
-			
-			// Show progress
-			progressUI.getProgressBar().progressProperty().bind(task.progressProperty());
-			progressUI.getLabel().textProperty().bind(task.messageProperty());
-			
-			UIManager.get().showDialog(progressDialog);
-			
-			// Ensure the overlay is not showing
-			UIManager.get().setOverlay(false);
+			createUnpackTask(stream, outputFile);
 		}
 	}
 	
 	private void packDialog(File inputFolder, File outputFile) throws Exception {
-		String projectName = FileManager.removeExtension(outputFile.getName());
-		
-		PackProgressUI.show(inputFolder, outputFile, projectName, false);
-		
-		// Ensure the overlay is not showing
-		UIManager.get().setOverlay(false);
-	}
 
-	@Override
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item) {
-		if (!item.isRoot()) {
-			
-			if (item.isMod() && isEncoder(item.getFile())) {
-				MenuItem menuItem = new MenuItem("Pack into ." + HashManager.get().getTypeName(TYPE_ID));
-				menuItem.setMnemonicParsing(false);
-				menuItem.setOnAction(event -> {
-					// This is after isEncoder(), so we can assume it has extension
-					final String name = item.getName().substring(0, item.getName().lastIndexOf("."));
-					final File outputFile = new File(item.getFile().getParentFile(), name);
-					
-					boolean result = UIManager.get().tryAction(() -> {
-						packDialog(item.getFile(), outputFile);
-						ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, name));
-					}, "Cannot encode file.");
-					if (!result) {
-						// Delete the file, as it hasn't been written properly
-						outputFile.delete();
-					}
-				});
-				contextMenu.getItems().add(menuItem);
-			}
-			else {
-				ResourceKey key = ProjectManager.get().getResourceKey(item);
-				
-				if (isDecoder(key)) {
-					MenuItem menuItem = new MenuItem("Unpack ." + HashManager.get().getTypeName(TYPE_ID));
-					menuItem.setMnemonicParsing(false);
-					menuItem.setOnAction(event -> {
-						final File outputFile = Converter.getOutputFile(key, item.getFile().getParentFile(), "unpacked");
-						boolean result = UIManager.get().tryAction(() -> {
-							
-							unpackDialog(item.getFile(), outputFile);
-							ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, outputFile.getName()));
-								
-						}, "Cannot decode file.");
-						if (!result) {
-							// Delete the file, as it hasn't been written properly
-							outputFile.delete();
-						}
-					});
-					contextMenu.getItems().add(menuItem);
-				}
-			}
-		}
 	}
 
 }

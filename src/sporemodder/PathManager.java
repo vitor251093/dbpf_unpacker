@@ -87,7 +87,6 @@ public class PathManager extends AbstractManager {
 		if (path != null) {
 			projectsFolder = new File(path);
 			if (!Files.isDirectory(projectsFolder.toPath())) {
-				UIManager.get().setInitializationError("The path to the projects folder does not exist: " + path);
 				projectsFolder = null;
 			}
 		}
@@ -164,6 +163,6 @@ public class PathManager extends AbstractManager {
 	 * @return
 	 */
 	public File getStyleFile(String name) {
-		return getProgramFile("Styles" + File.separatorChar + UIManager.get().getCurrentStyle() + File.separatorChar + name);
+		return null;
 	}
 }

@@ -24,7 +24,6 @@ import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.simulator.SimulatorClass;
-import sporemodder.file.spui.SporeUserInterface;
 import sporemodder.util.NameRegistry;
 import sporemodder.util.Project;
 
@@ -418,8 +417,6 @@ public class Launcher {
 
 		@Override
 		public Integer call() throws Exception {
-			SporeUserInterface.findSpuisWithControlId(inputFolder, controlId, true);
-
 			return 0;
 		}
 	}

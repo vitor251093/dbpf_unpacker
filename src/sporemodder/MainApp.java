@@ -31,8 +31,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import sporemodder.MessageManager.MessageType;
-import sporemodder.file.shaders.FXCompiler;
-import sporemodder.file.shaders.ShaderData;
 
 /**
  * The main class of the program.
@@ -40,9 +38,7 @@ import sporemodder.file.shaders.ShaderData;
 public class MainApp extends Application {
 	
 	private static MainApp instance;
-	private UIManager uiManager;
 	private MessageManager messageManager;
-	private EditorManager editorManager;
 	private PathManager pathManager;
 	private HashManager hashManager;
 	private ProjectManager projectManager;
@@ -51,23 +47,10 @@ public class MainApp extends Application {
 	private FormatManager formatManager;
 	private FileManager fileManager;
 	private UpdateManager updateManager;
-	private FXCompiler fxCompiler;
-	private GitHubManager gitHubManager;
-	
+
 	private Properties settings;
 	
-	/**
-	 * Returns the class that manages and controls the user interface of SporeModder.
-	 * @return The UI manager.
-	 */
-	public UIManager getUIManager() {
-		return uiManager;
-	}
 
-	public GitHubManager getGitHubManager() {
-		return gitHubManager;
-	}
-	
 	/**
 	 * Returns the class that manages internal messages and events.
 	 * @return The message manager.
@@ -75,15 +58,7 @@ public class MainApp extends Application {
 	public MessageManager getMessageManager() {
 		return messageManager;
 	}
-	
-	/**
-	 * Returns the class that manages the supported file editors and syntax highlighting formats.
-	 * @return The editor manager.
-	 */
-	public EditorManager getEditorManager() {
-		return editorManager;
-	}
-	
+
 	/**
 	 * Returns the class that manages the program and projects path.
 	 * @return The path manager.
@@ -143,11 +118,7 @@ public class MainApp extends Application {
 	public UpdateManager getUpdateManager() {
 		return updateManager;
 	}
-	
-	public FXCompiler getFXCompiler() {
-		return fxCompiler;
-	}
-	
+
 	/**
 	 * Returns the current instance of the MainApp class.
 	 */
@@ -165,16 +136,12 @@ public class MainApp extends Application {
 		messageManager = new MessageManager();
 		gameManager = new GameManager();
 		pathManager = new PathManager();
-		uiManager = new UIManager();
-		if (!testInit) editorManager = new EditorManager();
 		hashManager = new HashManager();
 		projectManager = new ProjectManager();
 		if (!testInit) documentationManager = new DocumentationManager();
 		formatManager = new FormatManager();
 		fileManager = new FileManager();
 		updateManager = new UpdateManager();
-		fxCompiler = new FXCompiler();
-		gitHubManager = new GitHubManager();
 
 		// Initialize it first, otherwise we can't get the settings
 		pathManager.initialize(null);
@@ -197,17 +164,11 @@ public class MainApp extends Application {
 		gameManager.initialize(settings);
 		fileManager.initialize(settings);
 		
-		if (!testInit) uiManager.initialize(settings);
-		if (!testInit) editorManager.initialize(settings);
 		hashManager.initialize(settings);
 		projectManager.initialize(settings);
 		if (!testInit) documentationManager.initialize(settings);
 		formatManager.initialize(settings);
-		fxCompiler.initialize(settings);
-		gitHubManager.initialize(settings);
 
-		ShaderData.initialize();
-		
 		messageManager.postMessage(MessageType.OnSettingsLoad, settings);
 	}
 	
@@ -215,15 +176,11 @@ public class MainApp extends Application {
 		messageManager.saveSettings(settings);
 		gameManager.saveSettings(settings);
 		pathManager.saveSettings(settings);
-		uiManager.saveSettings(settings);
-		editorManager.saveSettings(settings);
 		hashManager.saveSettings(settings);
 		projectManager.saveSettings(settings);
 		documentationManager.saveSettings(settings);
 		formatManager.saveSettings(settings);
 		fileManager.saveSettings(settings);
-		fxCompiler.saveSettings(settings);
-		gitHubManager.saveSettings(settings);
 
 		messageManager.postMessage(MessageType.OnSettingsSave, settings);
 		
@@ -241,14 +198,10 @@ public class MainApp extends Application {
 	
 	@Override
 	public void stop() {
-		gitHubManager.dispose();
-		fxCompiler.dispose();
 		documentationManager.dispose();
 		formatManager.dispose();
-		editorManager.dispose();
 		projectManager.dispose();
 		hashManager.dispose();
-		uiManager.dispose();
 
 		fileManager.dispose();
 		pathManager.dispose();
@@ -258,31 +211,9 @@ public class MainApp extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		
-		uiManager.start(primaryStage);
-		
-		// Before showing, notify
-		uiManager.notifyUIUpdate(true);
-		
-		uiManager.show();
-		
 		if (!updateManager.checkUpdate()) {
 			Platform.exit();
 			return;
-		}
-
-		uiManager.showInitializationError();
-
-		gitHubManager.showFirstTimeDialog();
-		
-		if (uiManager.isFirstTime()) {
-			gameManager.showFirstTimeDialog();
-			
-			projectManager.showFirstTimeDialog();
-			
-			uiManager.setOverlay(false);
-			
-			uiManager.setFirstTime(false);
-			MainApp.get().saveSettings();
 		}
 
 	}

@@ -27,7 +27,6 @@ import sporemodder.file.filestructures.Structure;
 import sporemodder.file.filestructures.StructureEndian;
 import sporemodder.file.filestructures.metadata.StructureMetadata;
 import sporemodder.HashManager;
-import sporemodder.file.argscript.ArgScriptArguments;
 
 /**
  * A structure used to reference a resource in the game, composed of three IDs: instance (the file name), group (the folder name) and type (the extension).
@@ -174,8 +173,6 @@ public class ResourceKey {
 		this.groupID = groupID;
 	}
 	
-	/** Calculates the ID equivalent to the given string using the {@link HashManager.getFileHash(String)} method, and
-	 * assigns it as the group ID (folder name) of this resource key. */
 	public void setGroupID(String groupID) {
 		this.groupID = HashManager.get().getFileHash(groupID);
 	}
@@ -185,8 +182,6 @@ public class ResourceKey {
 		this.instanceID = instanceID;
 	}
 	
-	/** Calculates the ID equivalent to the given string using the {@link HashManager.getFileHash(String)} method, and
-	 * assigns it as the instance ID (file name) of this resource key. */
 	public void setInstanceID(String instanceID) {
 		this.instanceID = HashManager.get().getFileHash(instanceID);
 	}
@@ -196,8 +191,6 @@ public class ResourceKey {
 		this.typeID = typeID;
 	}
 	
-	/** Calculates the ID equivalent to the given string using the {@link HashManager.getTypeHash(String)} method, and
-	 * assigns it as the type ID (extension) of this resource key. */
 	public void setTypeID(String typeID) {
 		this.typeID = HashManager.get().getTypeHash(typeID);
 	}
@@ -249,66 +242,6 @@ public class ResourceKey {
 		parse(str, null);
 	}
 	
-	public boolean parse(ArgScriptArguments args, int index) {
-		return parse(args, index, null);
-	}
-	
-	public boolean parse(ArgScriptArguments args, int index, String[] originals) {
-		String[] spl = args.get(index).split("\\.");
-		String[] groupFile = spl[0].split("!");
-		
-		int startPos = 0;
-		int endPos = 0;
-		
-		HashManager hasher = HashManager.get();
-		
-		try {
-			if (groupFile.length == 2) {
-				startPos = args.getPosition(index);
-				endPos = args.getRealPosition(startPos + groupFile[0].length());
-				groupID = hasher.getFileHash(groupFile[0]);
-				
-				startPos = endPos + 1;  // add the ! position
-				endPos = args.getRealPosition(startPos + groupFile[1].length());
-				instanceID = hasher.getFileHash(groupFile[1]);
-				
-				if (originals != null) {
-					originals[0] = groupFile[0];
-					originals[1] = groupFile[1];
-				}
-			}
-			else {
-				groupID = 0;
-				
-				startPos = args.getPosition(index);
-				endPos = args.getRealPosition(startPos + groupFile[0].length());
-				instanceID = hasher.getFileHash(groupFile[0]);
-				
-				if (originals != null) {
-					originals[1] = groupFile[0];
-				}
-			}
-			
-			if (spl.length == 2) {
-				startPos = args.getRealPosition(args.getPosition(index) + spl[0].length());
-				endPos = args.getEndPosition(index);
-				typeID = hasher.getTypeHash(spl[1]);
-				
-				if (originals != null) {
-					originals[2] = spl[1];
-				}
-			}
-			else {
-				typeID = 0;
-			}
-		}
-		catch (Exception e) {
-			args.getStream().addError(new DocumentError(e.getLocalizedMessage(), startPos, endPos));
-			return false;
-		}
-		
-		return true;
-	}
 
 	@Override
 	public int hashCode() {

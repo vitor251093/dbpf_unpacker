@@ -31,7 +31,6 @@ import java.util.Properties;
 
 import sporemodder.MessageManager.MessageType;
 import sporemodder.util.GamePathConfiguration.GamePathType;
-import sporemodder.view.dialogs.GamePathsUI;
 import sporemodder.util.SporeGame;
 import sporemodder.util.WinRegistry;
 
@@ -478,7 +477,7 @@ public class GameManager extends AbstractManager {
 	
 	public void showFirstTimeDialog() {
 		if (!hasSpore() || !hasGalacticAdventures()) {
-			GamePathsUI.show(false);
+
 		}
 	}
 }

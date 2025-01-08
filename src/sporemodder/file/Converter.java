@@ -96,8 +96,6 @@ public interface Converter {
 		return new File(folder, hasher.getFileName(key.getInstanceID()) + "." + hasher.getTypeName(key.getTypeID()) + "." + extraExtension);
 	}
 
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item);
-	
 	default void reset() {
 		
 	}

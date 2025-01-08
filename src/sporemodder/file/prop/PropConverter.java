@@ -30,17 +30,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TreeItem;
 import sporemodder.HashManager;
-import sporemodder.ProjectManager;
-import sporemodder.UIManager;
 import sporemodder.file.Converter;
 import sporemodder.file.DocumentException;
 import sporemodder.file.ResourceKey;
 import sporemodder.file.argscript.ArgScriptStream;
 import sporemodder.file.dbpf.DBPFPacker;
-import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
@@ -271,62 +266,6 @@ public class PropConverter implements Converter {
 		text = text.replaceAll("&hash;", "#");
 		return text;
 	}
-	
-	@Override
-	public void generateContextMenu(ContextMenu contextMenu, ProjectItem item) {
-		if (!item.isRoot()) {
-			
-			if (item.isMod() && isEncoder(item.getFile())) {
-				MenuItem menuItem = new MenuItem("Convert to PROP");
-				menuItem.setMnemonicParsing(false);
-				menuItem.setOnAction(event -> {
-					// This is after isEncoder(), so we can assume it has extension
-					final String name = item.getName().substring(0, item.getName().lastIndexOf("."));
-					File file = new File(item.getFile().getParentFile(), name);
-					
-					boolean result = UIManager.get().tryAction(() -> {
-						try (FileStream stream = new FileStream(new File(item.getFile().getParentFile(), name), "rw")) {
-							encode(item.getFile(), stream);
-							
-							ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, name));
-						}
-					}, "Cannot encode file.");
-					if (!result) {
-						// Delete the file, as it hasn't been written properly
-						file.delete();
-					}
-				});
-				contextMenu.getItems().add(menuItem);
-			}
-			else {
-				ResourceKey key = ProjectManager.get().getResourceKey(item);
-				
-				TreeItem<ProjectItem> parentItem = item.getTreeItem().getParent();
-				if (parentItem != null && !parentItem.getValue().isRoot()) {
-					key.setGroupID(parentItem.getValue().getName());
-				}
-				
-				if (isDecoder(key)) {
-					MenuItem menuItem = new MenuItem("Convert to PROP_T");
-					menuItem.setMnemonicParsing(false);
-					menuItem.setOnAction(event -> {
-						final File outputFile = Converter.getOutputFile(key, item.getFile().getParentFile(), "prop_t");
-						boolean result = UIManager.get().tryAction(() -> {
-							try (FileStream stream = new FileStream(item.getFile(), "r")) {
-								decode(stream, outputFile);
-								
-								ProjectManager.get().selectItem(ProjectManager.get().getSiblingItem(item, outputFile.getName()));
-							}
-						}, "Cannot decode file.");
-						if (!result) {
-							// Delete the file, as it hasn't been written properly
-							outputFile.delete();
-						}
-					});
-					contextMenu.getItems().add(menuItem);
-				}
-			}
-		}
-	}
+
 
 }

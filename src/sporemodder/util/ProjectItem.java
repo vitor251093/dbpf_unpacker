@@ -26,19 +26,15 @@ import java.nio.file.Path;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.TreeItem;
-import sporemodder.EditorManager;
 import sporemodder.PathManager;
 import sporemodder.ProjectManager;
 import sporemodder.view.ProjectTreeItem;
-import sporemodder.view.editors.EditorFactory;
-import sporemodder.view.editors.ItemEditor;
 
 /**
  * A project item, which represents a file in the project in a hierarchical way. Project items are always wrapped in
  * a JavaFX TreeItem. Methods in the program never rely on the file, but on the project item instead; this means that subclasses
  * of ProjectItem can be used to give special behavior to certain files (check {@link ProjectItemFactory}). For example, a subclass
  * could override the {@link #isFolder()} method to make a folder appear as a leaf item on the tree. Similarly, you can use
- * the {@link #createEditor()} method to make the item use a different editor.
  * <p>
  * Calling the super implementation is not necessary when overriding methods. Doing so will call the default implementation used for most files.
  */
@@ -131,7 +127,6 @@ public class ProjectItem {
 	
 	/**
 	 * Sets the name that is displayed in this item. Special items might not reflect this changes.
-	 * @param text
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -252,22 +247,9 @@ public class ProjectItem {
 	public void setProject(Project project) {
 		this.project = project;
 	}
-	
-	/** Returns a new instance of the editor that is used to modify or visualize this item. */
-	public ItemEditor createEditor() {
-		EditorFactory factory = EditorManager.get().getEditorFactory(this);
-		
-		if (factory != null) {
-			return factory.createInstance();
-		} else {
-			// folders don't use editors
-			return null;
-		}
-	}
-	
-	/** Returns the icon displayed in the item. By default, this just redirects to {@link EditorManager.getIcon(ProjectItem)}.*/
+
 	public Node getIcon() {
-		return EditorManager.get().getIcon(this);
+		return null;
 	}
 	
 
@@ -458,15 +440,7 @@ public class ProjectItem {
 	public boolean refreshItem() throws Exception {
 		return ProjectManager.get().refreshItem(this);
 	}
-	
-	/**
-	 * This method is called when the user right-clicks on the item, so a context menu must be generated.
-	 * This is called after all default buttons have been added to the menu, and by default it does nothing.
-	 * @param menu
-	 */
-	public void generateContextMenu(ContextMenu menu) {
-		
-	}
+
 	
 	/** Only for debugging purposes. */
 	@Override public String toString() {
