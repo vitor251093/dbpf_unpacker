@@ -215,7 +215,7 @@ public class Launcher {
 			ResourceKey key = new ResourceKey();
 			key.parse(name);
 			
-			Converter converter = FormatManager.get().getDecoder(key);
+			Converter converter = null;
 			if (converter == null) {
 				System.err.println("The input file is not in any recognizable format");
 				return -1;
@@ -252,7 +252,7 @@ public class Launcher {
 			input = input.getAbsoluteFile();
 			output = output.getAbsoluteFile();
 			
-			Converter converter = FormatManager.get().getEncoder(input);
+			Converter converter = null;
 			if (converter == null) {
 				System.err.println("The input file is not in any recognizable format");
 				return -1;
@@ -317,24 +317,11 @@ public class Launcher {
 			input = input.getAbsoluteFile();
 			output = output.getAbsoluteFile();
 			
-			List<Converter> convertersList = new ArrayList<>();
-			for (Converter converter : FormatManager.get().getConverters()) {
-				if (converters.isEmpty()) {
-					if (converters.contains(converter.getClass().getName())) {
-						convertersList.add(converter);
-					}
-				}
-				else if (converter.isEnabledByDefault()) {
-					convertersList.add(converter);
-				}
-			}
-			
-			
 			if (!output.exists()) {
 				output.mkdirs();
 			}
 			startTime = System.currentTimeMillis();
-			final DBPFUnpackingTask task = new DBPFUnpackingTask(input, output, null, convertersList);
+			final DBPFUnpackingTask task = new DBPFUnpackingTask(input, output);
 			task.setNoJavaFX();
 			task.setNoJavaFXProgressListener(PROGRESS_BAR_LISTENER);
 			

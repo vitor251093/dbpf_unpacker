@@ -7,7 +7,6 @@ import java.util.List;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.FormatManager;
 import sporemodder.HashManager;
 import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
@@ -25,13 +24,8 @@ public class DBPFConverter implements Converter {
 		}
 		outputFile.mkdir();
 		
-		List<Converter> converters = new ArrayList<>();
-		for (Converter c : FormatManager.get().getConverters()) {
-			if (c.isEnabledByDefault()) converters.add(c);
-		}
-		
 		stream.setBaseOffset(stream.getFilePointer());
-		DBPFUnpackingTask task = new DBPFUnpackingTask(stream, outputFile, null, converters);
+		DBPFUnpackingTask task = new DBPFUnpackingTask(stream, outputFile);
 
 		return task;
 	}

@@ -31,7 +31,6 @@ import java.util.function.Consumer;
 
 import sporemodder.file.filestructures.StreamWriter;
 import javafx.concurrent.Task;
-import sporemodder.FormatManager;
 import sporemodder.HashManager;
 import sporemodder.MessageManager;
 import sporemodder.MessageManager.MessageType;
@@ -191,7 +190,7 @@ public class DBPFPackingTask extends Task<Void> {
 		//TODO support DBBF maybe?
 		
 		// Doesn't really make sense to let the user disable converters.
-		List<Converter> converters = new ArrayList<>(FormatManager.get().getConverters());
+		List<Converter> converters = new ArrayList<>();
 		// Reverse them so the most common ones (.prop, .rw4) are first
 		Collections.reverse(converters);
 		
@@ -309,8 +308,6 @@ public class DBPFPackingTask extends Task<Void> {
 		}
 		finally {
 			if (packer != null) packer.close();
-			
-			for (Converter converter : FormatManager.get().getConverters()) converter.reset();
 		}
 		
 		// Once done, we can disable updating the project registry

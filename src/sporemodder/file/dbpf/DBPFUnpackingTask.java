@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,9 +73,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	/** We will keep all files that couldn't be converted here, so that we can keep unpacking the DBPF. */
 	private final Map<DBPFItem, Exception> exceptions = new HashMap<>();
 	
-	/** All the converters used .*/
-	private final List<Converter> converters;
-	
 	/** How much time the operation took, in milliseconds. */
 	private long ellapsedTime;
 	
@@ -91,24 +87,15 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	private boolean noJavaFX = false;
 	private Consumer<Double> noJavaFXProgressListener;
 	
-	public DBPFUnpackingTask(File inputFile, File outputFolder, Object project, List<Converter> converters) {
+	public DBPFUnpackingTask(File inputFile, File outputFolder) {
 		this.inputFiles.add(inputFile);
 		this.outputFolder = outputFolder;
-		this.converters = converters;
 		this.inputStream = null;
 	}
-	
-	public DBPFUnpackingTask(Collection<File> inputFiles, File outputFolder, Object project, List<Converter> converters) {
-		this.inputFiles.addAll(inputFiles);
-		this.outputFolder = outputFolder;
-		this.converters = converters;
-		this.inputStream = null;
-	}
-	
-	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder, Object project, List<Converter> converters) {
+
+	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder) {
 		this.inputStream = inputStream;
 		this.outputFolder = outputFolder;
-		this.converters = converters;
 	}
 	
 	public void setNoJavaFX() {
@@ -135,23 +122,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	}
 
 	/**
-	 * Returns a list of all the converters that will be used when unpacking files.
-	 * On every file, if the converter {@link Converter.isDecoder()} method returns true, it will be used to decode the file.
-	 * @return
-	 */
-	public List<Converter> getConverters() {
-		return converters;
-	}
-	
-	/**
-	 * Returns the list of input package files that will be unpacked.
-	 * @return
-	 */
-	public List<File> getInputFiles() {
-		return inputFiles;
-	}
-	
-	/**
 	 * Returns the output folder where the unpacked files will be written.
 	 * @return
 	 */
@@ -166,23 +136,7 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	public Object getProject() {
 		return null;
 	}
-	
-	/**
-	 * Sets a method that decides which items are unpacked and which are ignored.
-	 * @param itemFilter
-	 */
-	public void setItemFilter(DBPFItemFilter itemFilter) {
-		this.itemFilter = itemFilter;
-	}
 
-	
-	public boolean isParallel() {
-		return isParallel;
-	}
-
-	public void setParallel(boolean isParallel) {
-		this.isParallel = isParallel;
-	}
 
 	private static void findNamesFile(List<DBPFItem> items, StreamReader in) throws IOException {
 		HashManager hasher = HashManager.get();
@@ -319,14 +273,7 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 					totalFileSize += fileSizes[i];
 				}
 			}
-			
-			// Previously we did this for every package
-			// PROBLEM: SmtConverter has two files that are only converted as one file. EP1_PatchData only has
-			// one of those files, and we want to use that together with the other file from another package,
-			// but resetting the converter made it forget the file.
-			// FIX: We only reset them once, here. Only SmtConverter was using reset anyways so its fine
-			for (Converter converter : converters) converter.reset();
-			
+
 			int i = 0;
 			for (File inputFile : inputFiles) {
 				double projectProgress = progressFactor * (double)fileSizes[i] / totalFileSize;
@@ -354,36 +301,12 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		
 		return null;
 	}
-	
-	/**
-	 * Returns a Map with all the items that could not be unpacked/converted, mapped to the exception that caused that error.
-	 * @return
-	 */
-	public Map<DBPFItem, Exception> getExceptions() {
-		return exceptions;
-	}
-	
-	/**
-	 * Returns how much time the operation took, in milliseconds.
-	 * @return
-	 */
-	public long getEllapsedTime() {
-		return ellapsedTime;
-	}
 
 	private void incProgress(double increment) {
 		progress += increment;
 		updateProgress(progress, 1.0);
 	}
-	
-	/**
-	 * When unpacking multiple packages at once, returns a list of all package files that couldn't be unpacked.
-	 * @return
-	 */
-	public List<File> getFailedDBPFs() {
-		return failedDBPFs;
-	}
-	
+
 	private class FileConvertAction extends RecursiveAction {
 		final DBPFItem item;
 		final File folder;
@@ -402,48 +325,8 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		@Override public void compute() {
 			try {
 				HashManager hasher = HashManager.get();
-				int groupID = item.name.getGroupID();
-				int instanceID = item.name.getInstanceID();
-				
-				// Has the file been converted?
-				boolean isConverted = false;
-				
-				// Do not convert editor packages
-				if (groupID == 0x40404000 && item.name.getTypeID() == 0x00B1B104) {
-
-				}
-				else {
-					try {
-						for (Converter converter : converters) {
-							if (converter.isDecoder(item.name)) {
-								
-								if (converter.decode(dataStream, folder, item.name)) {
-									isConverted = true;
-									break;
-								}
-								else {
-									// throw new IOException("File could not be converted.");
-									// We could throw an error here, but it is not appropriate:
-									// some files cannot be converted but did not necessarily have an error,
-									// for example trying to convert a non-texture rw4. So we jsut keep searching
-									// for another converter or write the raw file.s
-									continue;
-								}
-							}
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						exceptions.put(item, e);
-						// Handling the exception here will make it write the unconverted file
-					}
-				}
-				
-				if (!isConverted) {
-					// If it hasn't been converted, just write the file straight away.
-					
-					String name = hasher.getFileName(item.name.getInstanceID()) + "." + hasher.getTypeName(item.name.getTypeID());
-					dataStream.writeToFile(new File(folder, name));
-				}
+				String name = hasher.getFileName(item.name.getInstanceID()) + "." + hasher.getTypeName(item.name.getTypeID());
+				dataStream.writeToFile(new File(folder, name));
 			}
 			catch (Exception e) {
 				exceptions.put(item, e);
