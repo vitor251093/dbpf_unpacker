@@ -27,13 +27,6 @@ import org.xml.sax.Attributes;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.DocumentException;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLexer;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyBool extends BaseProperty {
 	
@@ -84,74 +77,5 @@ public class PropertyBool extends BaseProperty {
 	
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeBoolean(Boolean.parseBoolean(text));
-	}
-
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (boolean value : values) {
-				writer.indentNewline();
-				writer.arguments(Boolean.toString(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, Boolean.toString(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			Boolean value = null;
-			
-			if (line.getArguments(args, 2) && (value = stream.parseBoolean(args, 1)) != null) {
-				parser.getData().add(args.get(0), new PropertyBool(value));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Boolean> values = new ArrayList<Boolean>();
-			final ArgScriptLexer lexer = new ArgScriptLexer();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				// We want some boolean functions
-				lexer.removeFunctions();
-				lexer.addDefaultFunctions(stream);
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				lexer.setText(line.trim());
-				
-				try {
-					values.add(lexer.parseBoolean());
-				}
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyBool(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

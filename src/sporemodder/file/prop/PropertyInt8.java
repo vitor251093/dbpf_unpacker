@@ -29,13 +29,6 @@ import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentError;
 import sporemodder.file.DocumentException;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLexer;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyInt8 extends BaseProperty {
 	
@@ -89,77 +82,5 @@ public class PropertyInt8 extends BaseProperty {
 	
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeByte(HashManager.get().int8(text));
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (byte value : values) {
-				writer.indentNewline();
-				writer.arguments(Byte.toString(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, Byte.toString(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			Number value = null;
-			
-			if (line.getArguments(args, 2) && (value = stream.parseByte(args, 1)) != null) {
-				parser.getData().add(args.get(0), new PropertyInt8(value.byteValue()));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Byte> values = new ArrayList<Byte>();
-			final ArgScriptLexer lexer = new ArgScriptLexer();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				lexer.setText(line.trim());
-				
-				try {
-					long value = lexer.parseInteger();
-					
-					if (value > MAX_VALUE || value < MIN_VALUE) {
-						stream.addError(new DocumentError(String.format("8-bit Integer out of the range (%d, %d).", MIN_VALUE, MAX_VALUE), 0, line.length()));
-					}
-					else {
-						values.add((byte) value);
-					}
-				}
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyInt8(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

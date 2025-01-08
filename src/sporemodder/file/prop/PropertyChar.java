@@ -26,12 +26,6 @@ import org.xml.sax.Attributes;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyChar extends BaseProperty {
 	
@@ -83,59 +77,5 @@ public class PropertyChar extends BaseProperty {
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeByte(text.charAt(0));
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (char value : values) {
-				writer.indentNewline();
-				writer.arguments(Character.toString(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, Character.toString(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			if (line.getArguments(args, 2)) {
-				parser.getData().add(args.get(0), new PropertyChar(args.get(1).charAt(0)));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Character> values = new ArrayList<Character>();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				values.add(line.trim().charAt(0));
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyChar(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }

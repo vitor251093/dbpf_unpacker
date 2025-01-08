@@ -19,7 +19,6 @@
 package sporemodder.file;
 
 import sporemodder.HashManager;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.file.prop.PropConverter;
 
 public class LocalizedText {
@@ -27,23 +26,8 @@ public class LocalizedText {
 	private String text;
 	private int tableID;
 	private int instanceID;
-	
-	public LocalizedText(String text) {
-		this.text = text;
-	}
-	
-	public LocalizedText(int tableID, int instanceID) {
-		this.tableID = tableID;
-		this.instanceID = instanceID;
-	}
-	
+
 	public LocalizedText() {
-	}
-	
-	public LocalizedText(LocalizedText other) {
-		this.text = other.text;
-		this.tableID = other.tableID;
-		this.instanceID = other.instanceID;
 	}
 
 	public String getText() {
@@ -64,25 +48,7 @@ public class LocalizedText {
 	public void setInstanceID(int instanceID) {
 		this.instanceID = instanceID;
 	}
-	
-	public void write(ArgScriptWriter writer) {
-		HashManager hasher = HashManager.get();
-		
-		if (tableID != 0) {
-			StringBuilder sb = new StringBuilder();
-			
-			sb.append(hasher.getFileName(tableID));
-			sb.append('!');
-			sb.append(hasher.hexToString(instanceID));
-			
-			writer.parenthesis(sb.toString());
-		}
-		
-		if (text != null) {
-			writer.literal(PropConverter.intoValidText(text));
-		}
-	}
-	
+
 	@Override public String toString() {
 		StringBuilder sb = new StringBuilder();
 		HashManager hasher = HashManager.get();

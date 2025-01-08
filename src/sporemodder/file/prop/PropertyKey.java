@@ -28,12 +28,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.ResourceKey;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyKey extends BaseProperty {
 	
@@ -118,73 +112,5 @@ public class PropertyKey extends BaseProperty {
 		if (!bArray) {
 			stream.writeLEInt(0);
 		}
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (ResourceKey value : values) {
-				writer.indentNewline();
-				writer.arguments(value.toString());
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, values[0].toString());
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			if (line.getArguments(args, 2)) {
-				String[] originals = new String[3];
-				ResourceKey key = new ResourceKey();
-				//key.parse(args, 1, originals);
-				parser.getData().add(args.get(0), new PropertyKey(key));
-				
-				line.addHyperlinkForArgument("key", originals, 1);
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<ResourceKey> values = new ArrayList<ResourceKey>();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				int start = PropertyList.getHyperlinkStart(stream, line);
-				line = line.trim();
-				
-				String[] originals = new String[3];
-				ResourceKey key = new ResourceKey();
-				key.parse(line.trim(), originals);
-				values.add(key);
-				
-				stream.addHyperlink("key", originals, start, start + line.length());
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyKey(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

@@ -29,13 +29,6 @@ import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentError;
 import sporemodder.file.DocumentException;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLexer;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public final class PropertyInt32 extends BaseProperty {
 	
@@ -88,81 +81,5 @@ public final class PropertyInt32 extends BaseProperty {
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeInt(HashManager.get().int32(text));
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			HashManager hasher = HashManager.get();
-			for (int value : values) {
-				writer.indentNewline();
-				writer.arguments(hasher.formatInt32(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, HashManager.get().formatInt32(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			Number value = null;
-			
-			if (line.getArguments(args, 2) && (value = stream.parseInt(args, 1)) != null) {
-				parser.getData().add(args.get(0), new PropertyInt32(value.intValue()));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Integer> values = new ArrayList<Integer>();
-			final ArgScriptLexer lexer = new ArgScriptLexer();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				// We want the "hash" function, basically
-				lexer.removeFunctions();
-				lexer.addDefaultFunctions(stream);
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				lexer.setText(line.trim());
-				
-				try {
-					long value = lexer.parseInteger();
-					
-					// We have to check the range differently. Some int32 properties use hashes, which might return positive longs
-					if ((int)(value & 0xFFFFFFFFL) != value && !lexer.lastNumberWasHexadecimal()) {
-						stream.addError(new DocumentError(String.format("32-bit Integer out of the range (%d, %d).", MIN_VALUE, MAX_VALUE), 0, line.length()));
-					} else {
-						values.add((int) value);
-					}
-				}
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyInt32(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }

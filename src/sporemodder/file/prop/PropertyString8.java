@@ -28,12 +28,6 @@ import sporemodder.file.filestructures.Stream.StringEncoding;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.DocumentError;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyString8 extends BaseProperty {
 	
@@ -86,71 +80,5 @@ public class PropertyString8 extends BaseProperty {
 		stream.writeInt(text.length());
 		stream.write(text.getBytes("US-ASCII"));
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (String value : values) {
-				writer.indentNewline();
-				writer.literal(PropConverter.intoValidText(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName);
-			writer.literal(values[0]);
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			if (line.getArguments(args, 2)) {
-				parser.getData().add(args.get(0), new PropertyString8(PropConverter.intoOriginalText(args.get(1))));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<String> values = new ArrayList<String>();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				String trimmedLine = line.trim();
-				if (trimmedLine.charAt(0) != '"') {
-					// We do 1, 2 as we assume the first character is a tabulation
-					stream.addError(new DocumentError("String literals must start and end with \" symbols.", 1, 2));
-					return true;
-				}
-				if (trimmedLine.charAt(trimmedLine.length()-1) != '"') {
-					stream.addError(new DocumentError("String literals must start and end with \" symbols.", line.length() - 1, line.length()));
-					return true;
-				}
-				
-				values.add(PropConverter.intoOriginalText(trimmedLine.substring(1, trimmedLine.length() - 1)));
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyString8(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }

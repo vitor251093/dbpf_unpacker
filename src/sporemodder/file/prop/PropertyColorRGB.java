@@ -24,12 +24,6 @@ import java.util.List;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.util.ColorRGB;
 
 public class PropertyColorRGB extends BaseProperty {
@@ -84,67 +78,5 @@ public class PropertyColorRGB extends BaseProperty {
 			if (!isArray) stream.writePadding(4);
 		}
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (ColorRGB value : values) {
-				writer.indentNewline();
-				writer.arguments(value.toString());
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, values[0].toString());
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			ColorRGB value = new ColorRGB();
-			if (line.getArguments(args, 2) && stream.parseColorRGB(args, 1, value)) {
-				parser.getData().add(args.get(0), new PropertyColorRGB(value));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<ColorRGB> values = new ArrayList<ColorRGB>();
-			final ArgScriptLine line = new ArgScriptLine(stream);
-			final ArgScriptArguments args = new ArgScriptArguments();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String text) {
-				ColorRGB dst = new ColorRGB();
-				line.fromLine(text, null);
-				line.getSplitsAsArguments(args);
-				
-				stream.parseColorRGB(args, 0, dst);
-				values.add(dst);
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyColorRGB(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }

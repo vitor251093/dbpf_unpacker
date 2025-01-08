@@ -25,12 +25,6 @@ import java.util.List;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.BoundingBox;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.util.Vector3;
 
 public class PropertyBBox extends BaseProperty {
@@ -79,65 +73,5 @@ public class PropertyBBox extends BaseProperty {
 		for (BoundingBox value : values) {
 			value.write(stream);
 		}
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (BoundingBox value : values) {
-				writer.indentNewline();
-				writer.arguments(value.getMin().toString(), value.getMax().toString());
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, values[0].getMin().toString(), values[0].getMax().toString());
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			line.createError("BoundingBox properties are only available in array format.");
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<BoundingBox> values = new ArrayList<BoundingBox>();
-			final ArgScriptLine line = new ArgScriptLine(stream);
-			final ArgScriptArguments args = new ArgScriptArguments();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String text) {
-				line.fromLine(text, null);
-				line.getSplitsAsArguments(args);
-				float[] min = new float[3];
-				float[] max = new float[3];
-				
-				stream.parseVector3(args, 0, min);
-				stream.parseVector3(args, 1, max);
-				values.add(new BoundingBox(new Vector3(min), new Vector3(max)));
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyBBox(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

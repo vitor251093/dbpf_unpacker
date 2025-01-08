@@ -23,10 +23,6 @@ import java.io.IOException;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.filestructures.StructureUnsigned;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 /**
  * A class that represents a 3D transformation: it can store the same information as a 4x4
@@ -111,103 +107,6 @@ public class Transform {
 		offset.writeLE(out);
 		out.writeLEFloat(scale);
 		rotation.writeLE(out);
-	}
-	
-	public void toArgScript(ArgScriptWriter writer, boolean ignoreFlags) {
-		toArgScriptNoDefault(writer, ignoreFlags);
-		
-		if (flags == 0) {
-			writer.option("default");
-		}
-	}
-	
-	public void toArgScriptNoDefault(ArgScriptWriter writer, boolean ignoreFlags) {
-		if (ignoreFlags || (flags & FLAG_OFFSET) != 0) {
-			writer.option("offset");
-			writer.arguments(offset.toString());
-		}
-		
-		if (ignoreFlags || (flags & FLAG_SCALE) != 0) {
-			writer.option("scale");
-			writer.floats(scale);
-		}
-		
-		if (ignoreFlags || (flags & FLAG_ROTATE) != 0) {
-			writer.option("rotateXYZ");
-			//TODO use transposed matrix?
-			writer.floats(rotation.toEulerDegrees());
-		}
-	}
-	
-	public <T> void parse(ArgScriptStream<T> stream, ArgScriptLine line) {
-		ArgScriptArguments args = new ArgScriptArguments();
-		Number value = null;
-		
-		// - Offset - //
-		
-		if (line.getOptionArguments(args, "offset", 1)) {
-			float[] arr = new float[3];
-			stream.parseVector3(args, 0, arr);
-			offset.set(new Vector3(arr));
-			
-			flags |= FLAG_OFFSET;
-		}
-		
-		
-		// - Scale - //
-		
-		if (line.getOptionArguments(args, "scale", 1) && (value = stream.parseFloat(args, 0)) != null) {
-			scale = value.floatValue();
-			
-			flags |= FLAG_SCALE;
-		}
-		
-		
-		// - Rotation - //
-		
-		boolean usesRotation = false;
-		float[] eulerRotation = new float[3];
-		
-		if (line.getOptionArguments(args, "rotateZ", 1) && 
-				(value = stream.parseFloat(args, 0)) != null) {
-			usesRotation = true;
-			eulerRotation[2] = value.floatValue();
-		}
-		
-		if (line.getOptionArguments(args, "rotateY", 1) && 
-				(value = stream.parseFloat(args, 0)) != null) {
-			usesRotation = true;
-			eulerRotation[1] = value.floatValue();
-		}
-		
-		if (line.getOptionArguments(args, "rotateX", 1) && 
-				(value = stream.parseFloat(args, 0)) != null) {
-			usesRotation = true;
-			eulerRotation[0] = value.floatValue();
-		}
-		
-		if (line.getOptionArguments(args, "rotateXYZ", 3) && stream.parseFloats(args, eulerRotation)) {
-			usesRotation = true;
-		}
-		
-		if (line.getOptionArguments(args, "rotateZXY", 3) && stream.parseFloats(args, eulerRotation)) {
-			usesRotation = true;
-			// We must swap them
-			float[] temp = new float[3];
-			System.arraycopy(eulerRotation, 0, temp, 0, 3);
-			eulerRotation[0] = temp[1];
-			eulerRotation[1] = temp[2];
-			eulerRotation[2] = temp[0];
-		}
-		
-		if (usesRotation) {
-			int todo = 0;
-			//TODO SG_ufo_drop_cargo_Muzzle has wrong rotation; either we are calculating it wrong when encoding or when decoding
-			rotation.rotate(Math.toRadians(eulerRotation[0]), Math.toRadians(eulerRotation[1]), Math.toRadians(eulerRotation[2]));
-			rotation.transposed();
-			
-			flags |= FLAG_ROTATE;
-		}
 	}
 
 	public void copy(Transform other) {

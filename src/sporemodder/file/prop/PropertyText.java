@@ -30,12 +30,6 @@ import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentException;
 import sporemodder.file.LocalizedText;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.file.argscript.WordSplitLexer;
 import sporemodder.file.effects.ResourceID;
 import sporemodder.file.locale.LocaleUnit;
@@ -131,87 +125,5 @@ public class PropertyText extends BaseProperty {
 		}
 		
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (LocalizedText value : values) {
-				writer.indentNewline();
-				value.write(writer);
-			}
-			writer.endBlock();
-			writer.command("end");
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName);
-			values[0].write(writer);
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			line.createError("Text properties are only available in array format.");
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<LocalizedText> values = new ArrayList<LocalizedText>();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String text) {
-				try {
-					LocalizedText value = new LocalizedText();
-					WordSplitLexer lexer = new WordSplitLexer(text);
-					lexer.skipWhitespaces();
-					
-					int word1Start = lexer.getPosition();
-					String word1 = lexer.nextWord();
-					int word1End = lexer.getPosition();  // we can't use word1.length() because that does not include parenthesis
-					String word2 = lexer.nextWord();
-					
-					if (word2 == null) {
-						// No localization
-						value.setText(word1);
-					}
-					else {
-						String[] originals = new String[2];
-						ResourceID resource = new ResourceID();
-						resource.parse(word1, originals);
-						value.setTableID(resource.getGroupID());
-						value.setInstanceID(resource.getInstanceID());
-						
-						// No need to check "", nextWord removes it
-						value.setText(PropConverter.intoOriginalText(word2));
-						
-						stream.addHyperlink(LocaleUnit.HYPERLINK_LOCALE, originals, word1Start, word1End);
-					}
-					values.add(value);
-				} 
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyText(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }

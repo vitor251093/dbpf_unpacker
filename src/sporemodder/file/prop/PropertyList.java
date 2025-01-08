@@ -29,8 +29,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.LocalizedText;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 /**
  * The class that represents a PROP file, which is just a map of properties and their IDs.
@@ -105,61 +103,7 @@ public class PropertyList {
 			}
 		}
 	}
-	
-	public ArgScriptWriter toArgScript() {
-		removeAutolocales();
-		
-		ArgScriptWriter writer = new ArgScriptWriter();
-		HashManager hasher = HashManager.get();
-		
-		Map<String, BaseProperty> orderedProperties;
-		
-//		// We want to output them in alphabetical order
-//		orderedProperties = new TreeMap<String, BaseProperty>();
-//		for (Map.Entry<Integer, BaseProperty> entry : properties.entrySet()) {
-//			orderedProperties.put(hasher.getPropName(entry.getKey()), entry.getValue());
-//		}
-		
-		// First output 'parent', 'description', then properties with name, then properties with hash
-		// We want to respect insertion order
-		orderedProperties = new LinkedHashMap<String, BaseProperty>();
-		Map<String, BaseProperty> names = new TreeMap<String, BaseProperty>();  // alphabetical order
-		Map<String, BaseProperty> hashes = new TreeMap<String, BaseProperty>();
-		
-		BaseProperty propertyParent = null;
-		BaseProperty propertyParentAudio = null;
-		BaseProperty propertyName = null;
-		BaseProperty propertyDescription = null;
-		
-		for (Map.Entry<Integer, BaseProperty> entry : properties.entrySet()) {
-			int key = entry.getKey();
-			if (key == 0x00B2CCCA) propertyDescription = entry.getValue();
-			else if (key == 0x00B2CCCB) propertyParent = entry.getValue();
-			else if (key == 0x2F8B3BF4) propertyName = entry.getValue(); // FNV132 hash of "name"
-			else if (key == 0x5F6317D5) propertyParentAudio = entry.getValue(); // FNV132 hash of "parent"
-			else {
-				String name = hasher.getPropName(key);
-				if (name.startsWith("0x")) hashes.put(name, entry.getValue());
-				else names.put(name, entry.getValue());
-			}
-		}
-		
-		if (propertyParent != null) orderedProperties.put(hasher.getPropName(0x00B2CCCB), propertyParent);
-		if (propertyParentAudio != null) orderedProperties.put(hasher.getPropName(0x5F6317D5), propertyParentAudio);
-		if (propertyName != null) orderedProperties.put(hasher.getPropName(0x2F8B3BF4), propertyName);
-		if (propertyDescription != null) orderedProperties.put(hasher.getPropName(0x00B2CCCA), propertyDescription);
-		orderedProperties.putAll(names);
-		orderedProperties.putAll(hashes);
-		
-		for (Map.Entry<String, BaseProperty> entry : orderedProperties.entrySet()) {
-			if (entry.getValue() != null) {
-				entry.getValue().writeArgScript(entry.getKey(), writer);
-			}
-		}
-		
-		return writer;
-	}
-	
+
 	public BaseProperty get(int id) {
 		return properties.get(id);
 	}
@@ -275,53 +219,6 @@ public class PropertyList {
 		}
 	}
 	
-	private static void addStreamParsers(ArgScriptStream<PropertyList> stream) {
-		PropertyUnknown.addParser(stream);
-		PropertyBool.addParser(stream);
-		PropertyChar.addParser(stream);
-		PropertyWChar.addParser(stream);
-		PropertyInt8.addParser(stream);
-		PropertyUInt8.addParser(stream);
-		PropertyInt16.addParser(stream);
-		PropertyUInt16.addParser(stream);
-		PropertyInt32.addParser(stream);
-		PropertyUInt32.addParser(stream);
-		PropertyInt64.addParser(stream);
-		PropertyUInt64.addParser(stream);
-		PropertyFloat.addParser(stream);
-		PropertyDouble.addParser(stream);
-		PropertyString8.addParser(stream);
-		PropertyString16.addParser(stream);
-		PropertyKey.addParser(stream);
-		PropertyText.addParser(stream);
-		PropertyVector2.addParser(stream);
-		PropertyVector3.addParser(stream);
-		PropertyColorRGB.addParser(stream);
-		PropertyVector4.addParser(stream);
-		PropertyColorRGBA.addParser(stream);
-		PropertyTransform.addParser(stream);
-		PropertyBBox.addParser(stream);
-	}
-	
-	/**
-	 * Generates the ArgScript stream used to parse PROP files.
-	 * @return
-	 */
-	public ArgScriptStream<PropertyList> generateStream() {
-
-		ArgScriptStream<PropertyList> stream = new ArgScriptStream<PropertyList>();
-		stream.setData(this);
-		stream.addDefaultParsers();
-		
-		stream.setOnStartAction((asStream, data) -> {
-			data.properties.clear();
-		});
-		
-		addStreamParsers(stream);
-		
-		return stream;
-	}
-	
 	public String createAutolocaleFile(int tableID) {
 		boolean hasAutolocale = false;
 		HashManager hasher = HashManager.get();
@@ -391,15 +288,5 @@ public class PropertyList {
 		}
 		
 		return sb.toString();
-	}
-	
-	public static int getHyperlinkStart(ArgScriptStream<PropertyList> stream, String line) {
-		int start = 0;
-		int size = line.length();
-		while (start < size && Character.isWhitespace(line.charAt(start))) {
-			++start;
-		}
-		
-		return start;
 	}
 }

@@ -22,10 +22,6 @@ import java.io.IOException;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyUnknown extends BaseProperty {
 	
@@ -44,21 +40,5 @@ public class PropertyUnknown extends BaseProperty {
 	@Override
 	public void write(StreamWriter stream) throws IOException {
 		stream.writePadding(16);
-	}
-
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		writer.command(KEYWORD).arguments(propertyName);
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			if (line.getArguments(args, 1)) {
-				parser.getData().add(args.get(0), new PropertyUnknown());
-			}
-		}));
-		
 	}
 }

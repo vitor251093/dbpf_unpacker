@@ -24,12 +24,6 @@ import java.util.List;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.util.Vector2;
 
 public class PropertyVector2 extends BaseProperty {
@@ -83,68 +77,5 @@ public class PropertyVector2 extends BaseProperty {
 			
 			if (!isArray) stream.writePadding(8);
 		}
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (Vector2 value : values) {
-				writer.indentNewline();
-				writer.arguments(value.toString());
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, values[0].toString());
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			float[] value = new float[2];
-			if (line.getArguments(args, 2) && stream.parseVector2(args, 1, value)) {
-				parser.getData().add(args.get(0), new PropertyVector2(new Vector2(value)));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Vector2> values = new ArrayList<Vector2>();
-			final ArgScriptLine line = new ArgScriptLine(stream);
-			final ArgScriptArguments args = new ArgScriptArguments();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String text) {
-				float[] dst = new float[2];
-				line.fromLine(text, null);
-				line.getSplitsAsArguments(args);
-				
-				stream.parseVector2(args, 0, dst);
-				values.add(new Vector2(dst));
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyVector2(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

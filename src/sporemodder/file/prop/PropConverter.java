@@ -34,7 +34,6 @@ import sporemodder.HashManager;
 import sporemodder.file.Converter;
 import sporemodder.file.DocumentException;
 import sporemodder.file.ResourceKey;
-import sporemodder.file.argscript.ArgScriptStream;
 import sporemodder.file.dbpf.DBPFPacker;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
@@ -53,7 +52,6 @@ public class PropConverter implements Converter {
 	private boolean decode(StreamReader stream, File outputFile) throws IOException {
 		PropertyList list = new PropertyList();
 		list.read(stream);
-		list.toArgScript().write(outputFile);
 		return true;
 	}
 
@@ -73,10 +71,6 @@ public class PropConverter implements Converter {
 		}
 		else {
 			PropertyList list = new PropertyList();
-			ArgScriptStream<PropertyList> stream = list.generateStream();
-			stream.setFolder(input.getParentFile());
-			stream.setFastParsing(true);
-			stream.process(input);
 			list.write(output);
 			return true;
 		}
@@ -162,21 +156,6 @@ public class PropConverter implements Converter {
 			packer.setCurrentFile(input);
 			
 			try (MemoryStream output = new MemoryStream()) {
-				// Use getFileHash instead of fnvHash because we want it to be saved into the project registry
-				int tableID = HashManager.get().getFileHash(getTableIDString(input, splits));
-				
-				PropertyList list = new PropertyList();
-				ArgScriptStream<PropertyList> stream = list.generateStream();
-				stream.setFastParsing(true);
-				stream.process(input);
-				
-				if (!stream.getErrors().isEmpty()) {
-					throw new DocumentException(stream.getErrors().get(0));
-				}
-				
-				addAutoLocale(list.createAutolocaleFile(tableID), tableID, packer);
-				list.write(output);
-				
 				addPropItem(splits[0], splits[1], groupID, packer, output.getRawData(), (int) output.length());
 			}
 			return true;

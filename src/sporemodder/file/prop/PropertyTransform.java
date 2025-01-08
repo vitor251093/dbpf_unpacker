@@ -28,12 +28,6 @@ import org.xml.sax.SAXException;
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 import sporemodder.util.Matrix;
 import sporemodder.util.Transform;
 
@@ -202,65 +196,5 @@ public class PropertyTransform extends BaseProperty {
 		for (int i = 0; i < 3; i++) stream.writeLEFloat(matrix.m[i][0]);
 		for (int i = 0; i < 3; i++) stream.writeLEFloat(matrix.m[i][1]);
 		for (int i = 0; i < 3; i++) stream.writeLEFloat(matrix.m[i][2]);
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (Transform value : values) {
-				writer.indentNewline();
-				value.toArgScript(writer, true);
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName);
-			values[0].toArgScript(writer, true);
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			line.createError("Transform properties are only available in array format.");
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Transform> values = new ArrayList<Transform>();
-			final ArgScriptLine line = new ArgScriptLine(stream);
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String text) {
-				Transform dst = new Transform();
-				line.fromLine(text, null);
-				dst.parse(stream, line);
-				values.add(dst);
-				
-				stream.addSyntax(line, false);
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyTransform(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

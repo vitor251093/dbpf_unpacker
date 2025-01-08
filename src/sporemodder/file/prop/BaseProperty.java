@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 abstract class BaseProperty {
 	protected boolean isArray;
@@ -49,6 +48,4 @@ abstract class BaseProperty {
 	
 	public abstract void read(StreamReader stream, int itemCount) throws IOException;
 	public abstract void write(StreamWriter stream) throws IOException;
-	
-	public abstract void writeArgScript(String propertyName, ArgScriptWriter writer);
 }

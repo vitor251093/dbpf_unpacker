@@ -27,7 +27,6 @@ import sporemodder.file.filestructures.StructureEndian;
 import sporemodder.file.filestructures.metadata.StructureMetadata;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentError;
-import sporemodder.file.argscript.ArgScriptArguments;
 
 @Structure(StructureEndian.BIG_ENDIAN)
 /**
@@ -87,25 +86,6 @@ public class ResourceID {
 		this.instanceID = instanceID;
 	}
 	
-	public boolean parseSpecial(ArgScriptArguments args, int index) {
-		return parseSpecial(args, index, null);
-	}
-	
-	public boolean parseSpecial(ArgScriptArguments args, int index, String[] originalWords) {
-		switch (args.get(index)) {
-		case "terrain":
-			groupID = 0;
-			instanceID = 0;
-			return true;
-		case "water":
-			groupID = 1;
-			instanceID = 0;
-			return true;
-		default:
-			return parse(args, index, originalWords);
-		}
-	}
-	
 	public boolean isDefault() {
 		return groupID == -1 && instanceID == -1;
 	}
@@ -135,68 +115,6 @@ public class ResourceID {
 				originalWords[0] = splits[0];
 				originalWords[1] = splits[1];
 			}
-		}
-	}
-	
-	public boolean parse(ArgScriptArguments args, int index) {
-		return parse(args, index, null);
-	}
-
-	public boolean parse(ArgScriptArguments args, int index, String[] originals) {
-		String[] splits = args.get(index).split("!", 2);
-		
-		// We want to know what generated the exception
-		boolean generatedByGroupID = true;
-		
-		try {
-			if (splits.length == 1) {
-				groupID = 0;
-				generatedByGroupID = false;
-				
-				instanceID = HashManager.get().getFileHash(splits[0]);
-				
-				if (originals != null) originals[1] = splits[0];
-			}
-			else {
-				groupID = HashManager.get().getFileHash(splits[0]);
-				generatedByGroupID = false;
-				
-				instanceID = HashManager.get().getFileHash(splits[1]);
-				
-				if (originals != null) {
-					originals[0] = splits[0];
-					originals[1] = splits[1];
-				}
-			}
-			
-			return true;
-		}
-		catch (Exception e) {
-			DocumentError error;
-			
-			if (generatedByGroupID) {
-				error = new DocumentError(e.getLocalizedMessage(), args.getPosition(index), args.getRealPosition(args.getPosition(index) + splits[0].length()));
-			}
-			else {
-				// Get the starting position of intanceID
-				int instanceStart = args.getPosition(index);
-				int instanceLength = 0;
-				
-				if (splits.length == 2) {
-					instanceLength = splits[1].length();
-							
-					// Add the groupID length and the ! sign
-					instanceStart = splits[0].length() + 1;
-				}
-				else {
-					instanceLength = splits[0].length();
-				}
-				
-				error = new DocumentError(e.getLocalizedMessage(), instanceStart, args.getRealPosition(instanceStart + instanceLength));
-			}
-			
-			args.getStream().addError(error);
-			return false;
 		}
 	}
 

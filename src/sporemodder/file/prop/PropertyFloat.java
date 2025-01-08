@@ -28,13 +28,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentException;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLexer;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyFloat extends BaseProperty {
 	
@@ -85,71 +78,5 @@ public class PropertyFloat extends BaseProperty {
 	
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeFloat(Float.parseFloat(text));
-	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			HashManager hasher = HashManager.get();
-			for (float value : values) {
-				writer.indentNewline();
-				writer.arguments(hasher.floatToString(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, HashManager.get().floatToString(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			Number value = null;
-			
-			if (line.getArguments(args, 2) && (value = stream.parseFloat(args, 1)) != null) {
-				parser.getData().add(args.get(0), new PropertyFloat(value.floatValue()));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Float> values = new ArrayList<Float>();
-			final ArgScriptLexer lexer = new ArgScriptLexer();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				lexer.setText(line.trim());
-				
-				try {
-					values.add((float) lexer.parseFloat());
-				}
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyFloat(values));
-				stream.endSpecialBlock();
-			}
-		});
 	}
 }

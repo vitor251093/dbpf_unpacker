@@ -19,7 +19,6 @@
 
 package sporemodder;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
@@ -112,60 +111,13 @@ public class HashManager extends AbstractManager {
 		registries.put(simulatorRegistry.getFileName(), simulatorRegistry);
 		registries.put(projectRegistry.getFileName(), projectRegistry);
 	}
-	
-	public void replaceRegistries(NameRegistry file, NameRegistry prop, NameRegistry type) {
-		fileRegistry = file == null ? originalFileRegistry : file;
-		propRegistry = prop == null ? originalPropRegistry : prop;
-		typeRegistry = type == null ? originalTypeRegistry : type;
-	}
-	
-	public NameRegistry getRegistry(String fileName) {
-		return registries.get(fileName);
-	}
-	
-	public NameRegistry getRegistryByDescription(String description) {
-		for (NameRegistry reg : registries.values()) {
-			if (reg.getDescription().equals(description)) {
-				return reg;
-			}
-		}
-		return null;
-	}
-	
-	public NameRegistry getFileRegistry() {
-		return fileRegistry;
-	}
-
-	public NameRegistry getTypeRegistry() {
-		return typeRegistry;
-	}
-
-	public NameRegistry getPropRegistry() {
-		return propRegistry;
-	}
-
-	public NameRegistry getSimulatorRegistry() {
-		return simulatorRegistry;
-	}
 
 	public NameRegistry getProjectRegistry() {
 		return projectRegistry;
 	}
 
-	public boolean mustUpdateProjectRegistry() {
-		return updateProjectRegistry;
-	}
-	
 	public void setUpdateProjectRegistry(boolean value) {
 		this.updateProjectRegistry = value;
-	}
-
-	public NameRegistry getExtraRegistry() {
-		return extraRegistry;
-	}
-
-	public void setExtraRegistry(NameRegistry extraRegistry) {
-		this.extraRegistry = extraRegistry;
 	}
 
 	/**
@@ -178,31 +130,13 @@ public class HashManager extends AbstractManager {
 	}
 	
 	/**
-	 * Returns the string that represents this float, using the format pattern given.
-	 * @param value The value that will be turned into a string.
-	 * @param format The pattern that will be parsed by DecimalFormat.
-	 */
-	public String floatToString(float value, String format) {
-		return new DecimalFormat(format, decimalSymbols).format(value);
-	}
-	
-	/**
 	 * Returns the string that represents this float, using the default pattern: 7 decimals of precision.
 	 * @param value The value that will be turned into a string.
 	 */
 	public String doubleToString(double value) {
 		return defaultDecimalFormat.format(value);
 	}
-	
-	/**
-	 * Returns the string that represents this float, using the format pattern given.
-	 * @param value The value that will be turned into a string.
-	 * @param format The pattern that will be parsed by DecimalFormat.
-	 */
-	public String doubleToString(double value, String format) {
-		return new DecimalFormat(format, decimalSymbols).format(value);
-	}
-	
+
 	/**
 	 * Calculates the 32-bit FNV hash used by Spore for the given string.
 	 * It is case-insensitive: the string is converted to lower-case before calculating the hash.

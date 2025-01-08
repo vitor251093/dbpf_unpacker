@@ -29,13 +29,6 @@ import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.DocumentError;
 import sporemodder.file.DocumentException;
-import sporemodder.file.argscript.ArgScriptArguments;
-import sporemodder.file.argscript.ArgScriptLexer;
-import sporemodder.file.argscript.ArgScriptLine;
-import sporemodder.file.argscript.ArgScriptParser;
-import sporemodder.file.argscript.ArgScriptSpecialBlock;
-import sporemodder.file.argscript.ArgScriptStream;
-import sporemodder.file.argscript.ArgScriptWriter;
 
 public class PropertyInt16 extends BaseProperty {
 	
@@ -90,76 +83,5 @@ public class PropertyInt16 extends BaseProperty {
 	public static void fastConvertXML(StreamWriter stream, Attributes attributes, String text) throws IOException {
 		stream.writeShort(HashManager.get().int16(text));
 	}
-	
-	@Override
-	public void writeArgScript(String propertyName, ArgScriptWriter writer) {
-		if (isArray) {
-			writer.command(KEYWORD + "s").arguments(propertyName);
-			writer.startBlock();
-			for (short value : values) {
-				writer.indentNewline();
-				writer.arguments(Short.toString(value));
-			}
-			writer.endBlock();
-			writer.commandEND();
-		} 
-		else {
-			writer.command(KEYWORD).arguments(propertyName, Short.toString(values[0]));
-		}
-	}
-	
-	public static void addParser(ArgScriptStream<PropertyList> stream) {
-		final ArgScriptArguments args = new ArgScriptArguments();
-		
-		stream.addParser(KEYWORD, ArgScriptParser.create((parser, line) -> {
-			Number value = null;
-			
-			if (line.getArguments(args, 2) && (value = stream.parseInt(args, 1, MIN_VALUE, MAX_VALUE)) != null) {
-				parser.getData().add(args.get(0), new PropertyInt16(value.shortValue()));
-			}
-		}));
-		
-		stream.addParser(KEYWORD + "s", new ArgScriptSpecialBlock<PropertyList>() {
-			String propertyName;
-			final ArrayList<Short> values = new ArrayList<Short>();
-			final ArgScriptLexer lexer = new ArgScriptLexer();
-			
-			@Override
-			public void parse(ArgScriptLine line) {
-				values.clear();
-				stream.startSpecialBlock(this, "end");
-				
-				if (line.getArguments(args, 1)) {
-					propertyName = args.get(0);
-				}
-			}
-			
-			@Override
-			public boolean processLine(String line) {
-				lexer.setText(line.trim());
-				
-				try {
-					long value = lexer.parseInteger();
-					
-					if (value > MAX_VALUE || value < MIN_VALUE) {
-						stream.addError(new DocumentError(String.format("16-bit Integer out of the range (%d, %d).", MIN_VALUE, MAX_VALUE), 0, line.length()));
-					}
-					else {
-						values.add((short) value);
-					}
-				}
-				catch (DocumentException e) {
-					stream.addError(e.getError());
-				}
-				
-				return true;
-			}
-			
-			@Override
-			public void onBlockEnd() {
-				stream.getData().add(propertyName, new PropertyInt16(values));
-				stream.endSpecialBlock();
-			}
-		});
-	}
+
 }
