@@ -37,7 +37,7 @@ public abstract class ResumableTask<T> extends Task<T> {
 			running.notify();
 		}
 	}
-	
+
 	public void ensureRunning() throws InterruptedException {
 		// Ensure the task is not paused
 		if (!running.get()) {

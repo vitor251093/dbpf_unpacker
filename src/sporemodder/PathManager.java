@@ -29,19 +29,11 @@ import java.util.Properties;
 /**
  * A small class used to control the path where the program is, and merge relative paths accordingly.
  */
-public class PathManager extends AbstractManager {
+public class PathManager {
 
 	/** The folder where the program files are. */
 	private File programFolder;
-	/** The folder where SporeModder projects are. */
-	private File projectsFolder;
-	private boolean isDefaultProjectsFolder;
-	/** Path that will get saved as the Projects folder */
-	public String nextProjectsFolder;
 
-	private static final String PROPERTY_projectsPath = "projectsFolderPath";
-	
-	
 	/**
 	 * Returns the current instance of the PathManager class.
 	 */
@@ -49,8 +41,6 @@ public class PathManager extends AbstractManager {
 		return null;
 	}
 	
-	
-	@Override
 	public void initialize(Properties properties) {
 		String protocol = PathManager.class.getResource("PathManager.class").getProtocol();
 		if (Objects.equals(protocol, "jar")) {
@@ -82,69 +72,9 @@ public class PathManager extends AbstractManager {
 		}
 	}
 
-	public void loadSettings(Properties properties) {
-		String path = properties.getProperty(PROPERTY_projectsPath);
-		if (path != null) {
-			projectsFolder = new File(path);
-			if (!Files.isDirectory(projectsFolder.toPath())) {
-				projectsFolder = null;
-			}
-		}
-		if (projectsFolder == null) {
-			projectsFolder = getDefaultProjectsFolder();
-		}
-		// Check if the custom path points to the same folder
-		try {
-			isDefaultProjectsFolder = Files.isSameFile(projectsFolder.toPath(), getDefaultProjectsFolder().toPath());
-		} catch (IOException e) {
-			e.printStackTrace();
-			isDefaultProjectsFolder = path == null || path.isBlank();
-		}
-	}
-
-	@Override public void saveSettings(Properties properties) {
-		if (nextProjectsFolder != null) {
-			// non null but blank means reset to default
-			if (nextProjectsFolder.isBlank()) {
-				properties.remove(PROPERTY_projectsPath);
-			} else {
-				properties.put(PROPERTY_projectsPath, nextProjectsFolder);
-			}
-		} else if (!isDefaultProjectsFolder) {
-			properties.put(PROPERTY_projectsPath, projectsFolder.getAbsolutePath());
-		}
-	}
-
-	public File getDefaultProjectsFolder() {
-		return new File(programFolder, "Projects");
-	}
-
-	public String getProjectsFolderStringForSettings() {
-		if (nextProjectsFolder != null) {
-			return nextProjectsFolder;
-		} else if (isDefaultProjectsFolder) {
-			return "";
-		} else {
-			return projectsFolder.getAbsolutePath();
-		}
-	}
-
-	public boolean isDefaultProjectsFolder() {
-		return isDefaultProjectsFolder;
-	}
-
-	public void setNextProjectsFolder(String path) {
-		nextProjectsFolder = path;
-	}
-	
-	/** Returns the folder where the program files are. */
-	public File getProgramFolder() {
-		return programFolder;
-	}
-	
 	/** Returns the folder where SporeModder projects are. */
 	public File getProjectsFolder() {
-		return projectsFolder;
+		return null;
 	}
 	
 	/**
@@ -156,13 +86,5 @@ public class PathManager extends AbstractManager {
 	public File getProgramFile(String relativePath) {
 		return new File(programFolder, relativePath);
 	}
-	
-	/**
-	 * Returns the styling file that needs to be used for the current UI theme.
-	 * @param name
-	 * @return
-	 */
-	public File getStyleFile(String name) {
-		return null;
-	}
+
 }

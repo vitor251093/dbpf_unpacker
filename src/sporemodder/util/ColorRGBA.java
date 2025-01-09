@@ -37,32 +37,7 @@ public class ColorRGBA {
 		this.b = b;
 		this.a = a;
 	}
-	
-	public ColorRGBA(int r, int g, int b, int a) {
-		this.r = r / 255.0f;
-		this.g = g / 255.0f;
-		this.b = b / 255.0f;
-		this.a = a / 255.0f;
-	}
-	
-	public ColorRGBA(Color color) {
-		this.r = (float) color.getRed();
-		this.g = (float) color.getGreen();
-		this.b = (float) color.getBlue();
-		this.a = (float) color.getOpacity();
-	}
-	
-	public ColorRGBA(int code) {
-		a = ((code & 0xFF000000) >> 24) / 255.0f;
-		r = ((code & 0x00FF0000) >> 16) / 255.0f;
-		g = ((code & 0x0000FF00) >> 8) / 255.0f;
-		b = ((code & 0x000000FF) >> 0) / 255.0f;
-	}
-	
-	public ColorRGBA(ColorRGBA color) {
-		copy(color);
-	}
-	
+
 	public void copy(ColorRGBA color) {
 		this.r = color.r;
 		this.g = color.g;

@@ -19,7 +19,6 @@
 package sporemodder.file;
 
 import sporemodder.HashManager;
-import sporemodder.file.prop.PropConverter;
 
 public class LocalizedText {
 

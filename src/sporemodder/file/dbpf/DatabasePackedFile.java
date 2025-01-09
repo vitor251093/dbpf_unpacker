@@ -24,7 +24,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.HashManager;
 import sporemodder.file.ResourceKey;
-import sporemodder.file.dbpf.RefPackCompression.CompressorOutput;
 
 public class DatabasePackedFile {
 	
@@ -116,42 +115,7 @@ public class DatabasePackedFile {
 			throw new IOException("Unrecognised DBPF type magic: " + HashManager.get().hexToString(magic));
 		}
 	}
-	
-	public void writeHeader(StreamWriter stream) throws IOException {
-		if (isDBBF) {
-			stream.writeLEInt(TYPE_DBBF);
-			writeDBBF(stream);
-		} 
-		else {
-			stream.writeLEInt(TYPE_DBPF);
-			writeDBPF(stream);
-		}
-	}
-	
-	public void writeFile(StreamWriter stream, DBPFItem item, byte[] data, boolean compress) throws IOException {
-		
-		item.chunkOffset = stream.getFilePointer();
-		
-		if (compress) {
-			CompressorOutput compressOut = new CompressorOutput();
-			RefPackCompression.compress(data, data.length, compressOut);
 
-			stream.write(compressOut.data, 0, compressOut.lengthInBytes);
-			item.isCompressed = true;
-			item.memSize = data.length;
-			item.compressedSize = compressOut.lengthInBytes;
-		}
-		else {
-			stream.write(data, 0, data.length);
-			item.isCompressed = false;
-			item.memSize = data.length;
-			item.compressedSize = item.memSize;
-		}
-		
-		index.items.add(item);
-		indexCount++;
-	}
-	
 	public void readIndex(StreamReader stream) throws IOException {
 		stream.seek(indexOffset);
 		index.read(stream);

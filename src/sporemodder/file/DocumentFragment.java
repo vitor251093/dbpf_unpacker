@@ -27,7 +27,6 @@ public class DocumentFragment {
 	private int end;
 	private String description;
 	private int editPosition = -1;
-	private final List<DocumentFragment> children = new ArrayList<DocumentFragment>();
 	private DocumentFragment parent;
 	private DocumentStructure structure;
 	

@@ -25,7 +25,6 @@ import sporemodder.file.filestructures.StreamReader;
 import sporemodder.file.filestructures.StreamWriter;
 import sporemodder.file.filestructures.Structure;
 import sporemodder.file.filestructures.StructureEndian;
-import sporemodder.file.filestructures.metadata.StructureMetadata;
 import sporemodder.HashManager;
 
 /**

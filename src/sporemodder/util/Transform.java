@@ -32,23 +32,13 @@ import sporemodder.file.filestructures.StructureUnsigned;
 public class Transform {
 
 	private static final int FLAG_SCALE = 1;
-	private static final int FLAG_ROTATE = 2;
-	private static final int FLAG_OFFSET = 4;
-	
+
 	@StructureUnsigned(16) private int flags;  // short
 	@StructureUnsigned(16) private int transformCount = 1;  // short
 	private final Vector3 offset = new Vector3();
 	private float scale = 1.0f;
 	private final Matrix rotation = Matrix.getIdentity();
-	
-	public int getFlags() {
-		return flags;
-	}
-	
-	public void setFlags(int flags) {
-		this.flags = flags;
-	}
-	
+
 	public float getScale() {
 		flags |= FLAG_SCALE;
 		transformCount++;
@@ -57,26 +47,6 @@ public class Transform {
 	
 	public void setScale(float scale) {
 		this.scale = scale;
-	}
-	
-	public Vector3 getOffset() {
-		return offset;
-	}
-	
-	public void setOffset(Vector3 offset) {
-		flags |= FLAG_OFFSET;
-		transformCount++;
-		this.offset.set(offset);
-	}
-	
-	public Matrix getRotation() {
-		return rotation;
-	}
-	
-	public void setRotation(Matrix rotation) {
-		flags |= FLAG_ROTATE;
-		transformCount++;
-		this.rotation.copy(rotation);
 	}
 
 	public void read(StreamReader in) throws IOException {

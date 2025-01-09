@@ -31,7 +31,7 @@ import sporemodder.util.NameRegistry;
  * A class used to control hashes (hexadecimal 32-bit integers used as IDs) and everything related to them,
  * including name registries, name parsing, etc
  */
-public class HashManager extends AbstractManager {
+public class HashManager {
 	
 	/**
 	 * Returns the current instance of the HashManager class.
@@ -67,13 +67,12 @@ public class HashManager extends AbstractManager {
 	/** A temporary registry that keeps names used by a certain Project. This is only updated when doing certain actions, like packing the mod. */
 	private final NameRegistry projectRegistry = new NameRegistry(this, "Names used by the project", "names.txt");
 	private boolean updateProjectRegistry;
-	
+
 	/** A temporary registry that keeps track of all types/properties names used; can be used to import old projects without losing information. */
 	private NameRegistry extraRegistry;
-	
+
 	private final HashMap<String, NameRegistry> registries = new HashMap<String, NameRegistry>();
 	
-	@Override
 	public void initialize(Properties properties) {
 		decimalSymbols = new DecimalFormatSymbols(Locale.getDefault());
 		decimalSymbols.setDecimalSeparator('.');
@@ -116,24 +115,12 @@ public class HashManager extends AbstractManager {
 		return projectRegistry;
 	}
 
-	public void setUpdateProjectRegistry(boolean value) {
-		this.updateProjectRegistry = value;
-	}
-
 	/**
 	 * Returns the string that represents this float, using the default pattern: 7 decimals of precision.
 	 * @param value The value that will be turned into a string.
 	 */
 	public String floatToString(float value) {
 		if (Float.isNaN(value)) return "NaN";
-		return defaultDecimalFormat.format(value);
-	}
-	
-	/**
-	 * Returns the string that represents this float, using the default pattern: 7 decimals of precision.
-	 * @param value The value that will be turned into a string.
-	 */
-	public String doubleToString(double value) {
 		return defaultDecimalFormat.format(value);
 	}
 
@@ -181,15 +168,7 @@ public class HashManager extends AbstractManager {
 	public String hexToString(long num) {
 		return "0x" + String.format("%16s", Long.toHexString(num)).replace(' ', '0');
 	}
-	
-	/**
-	 * Same as {@link #hexToString(int)}, but this gives the hexadecimal number in uppercase letters.
-	 * @param num The integer that will be converted into an hexadecimal string.
-	 * @return
-	 */
-	public String hexToStringUC(long num) {
-		return "0x" + String.format("%16s", Long.toHexString(num).toUpperCase()).replace(' ', '0');
-	}
+
 	
 	/**
 	 * Returns the equivalent 8-bit signed integer parsed from the given string. The following formats are allowed:
@@ -449,131 +428,6 @@ public class HashManager extends AbstractManager {
 	}
 	
 	/**
-	 * Calculates what's the appropriate representation for the given int32 value: a plain decimal, an hexadecimal
-	 * number, or a name (in case the value is actually a hash). If the last situation happens, the name will be put
-	 * inside <code>hash(NAME)</code> as if it was an ArgScript function.
-	 * <p>
-	 * Internally, this method checks whether the number is within certain bounds considered acceptable for a 
-	 * decimal number: [-10000000, 10000000]. In case this fails, the method will check if there is any name available for that
-	 * value, and will return it or a hexadecimal representation otherwise.
-	 * @param value
-	 * @return
-	 */
-	public String formatInt32(int value) {
-		if (value <= -10000000 || value >= 10000000) {
-			// Is it a name?
-			String str = getFileNameOptional(value);
-			
-			if (str == null) {
-				return hexToString(value);
-			}
-			else {
-				return "hash(" + str + ")";
-			}
-		}
-		else {
-			return Integer.toString(value);
-		}
-	}
-	
-	/**
-	 * Calculates what's the appropriate representation for the given int64 value: a plain decimal or an hexadecimal
-	 * number.
-	 * <p>
-	 * Internally, this method checks whether the number is within certain bounds considered acceptable for a 
-	 * decimal number: [-10000000, 10000000]. In case this fails, the method will return it or a hexadecimal representation otherwise.
-	 * @param value
-	 * @return
-	 */
-	public String formatInt64(long value) {
-		if (value <= -10000000 || value >= 10000000) {
-			return hexToString(value);
-		}
-		else {
-			return Long.toString(value);
-		}
-	}
-	
-	/**
-	 * Same as {@link #formatInt32(int)}, but this method assumes the value is always a number, therefore not checking any name registry.
-	 * @param value
-	 * @return
-	 */
-	public String formatNumberInt32(int value) {
-		if (value <= -10000000 || value >= 10000000) {
-			return hexToString(value);
-		}
-		else {
-			return Integer.toString(value);
-		}
-	}
-	
-	/**
-	 * Calculates what's the appropriate representation for the given int64 value: a plain decimal, an hexadecimal
-	 * number, or a name (in case the value is actually a hash). If the last situation happens, the name will be put
-	 * inside <code>hash(NAME)</code> as if it was an ArgScript function.
-	 * <p>
-	 * Internally, this method checks whether the number is within certain bounds considered acceptable for a 
-	 * decimal number: [0, 10000000]. In case this fails, the method will check if there is any name available for that
-	 * value, and will return it or a hexadecimal representation otherwise.
-	 * @param value
-	 * @return
-	 */
-	public String formatUInt32(long value) {
-		if (value >= 10000000) {
-			// Is it a name?
-			int intValue = (int) (value & 0xFFFFFFFF);
-			String str = getFileNameOptional(intValue);
-			
-			if (str == null) {
-				return hexToString(intValue);
-			}
-			else {
-				return "hash(" + str + ")";
-			}
-		}
-		else {
-			return Long.toString(value);
-		}
-	}
-	
-	
-	/**
-	 * Returns the string that represents the given hash, taken from the simulator attribute IDs registry (reg_simulator.txt).
-	 * @param hash The 32-bit integer hash.
-	 */
-	public String getSimulatorName(int hash) {
-		String str = simulatorRegistry.getName(hash);
-		if (str != null) {
-			return str;
-		} else {
-			return hexToStringUC(hash);
-		}
-	}
-	
-	/**
-	 * Returns the 32-bit integer that represents the hash of the given name, taken from the simulator attribute IDs registry (reg_simulator.txt).
-	 * Unlike other registies, the name is expected to be on the registry; if it is not, instead of returning its hash, it will return -1.
-	 * <li>If the string begins with <code>0x</code> or <code>#</code>, it will be interpreted as a 8-digit or less hexadecimal number.
-	 * <li>If the input string is null or the name is not found in the registry, this method returns -1.
-	 */
-	public int getSimulatorHash(String name) {
-		if (name == null) {
-			return -1;
-		}
-		if (name.startsWith("#")) {
-			return Integer.parseUnsignedInt(name.substring(1), 16);
-		}
-		else if (name.startsWith("0x")) {
-			return Integer.parseUnsignedInt(name.substring(2), 16);
-		} 
-		else {
-			Integer i = simulatorRegistry.getHash(name);
-			return i == null ? -1 : i;
-		}
-	}
-	
-	/**
 	 * Returns the string that represents the given hash, taken from the instance and group IDs registry (reg_file.txt).
 	 * File hashes are different to the rest because they have support for <i>aliases</i>: Only names that end with the symbol <i>~</i> can be 
 	 * assigned to any hash; the rest of the names are always assigned to their equivalent FNV hash.
@@ -613,23 +467,7 @@ public class HashManager extends AbstractManager {
 			return hexToStringUC(hash);
 		}
 	}
-	
-	/**
-	 * Returns the string that represents the given hash, taken from the property IDs registry (reg_prop.txt).
-	 * <li>If the name is not found in the registry, the hexadecimal representation of the hash will be returned, such as <code>0x006E62BA</code>.
-	 */
-	public String getPropName(int hash) {
-		String str = propRegistry.getName(hash);
-		if (str == null && extraRegistry != null) {
-			str = extraRegistry.getName(hash);
-		}
-		if (str != null) {
-			return str;
-		} else {
-			return hexToStringUC(hash);
-		}
-	}
-	
+
 	/**
 	 * Returns the integer that represents the hash of the given name, taken from the group and instance IDs registry (reg_file.txt).
 	 * File hashes are different to the rest because they have support for <i>aliases</i>: Only names that end with the symbol <i>~</i> can be 

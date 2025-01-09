@@ -40,23 +40,7 @@ public class ColorRGB {
 		this.g = g;
 		this.b = b;
 	}
-	
-	public ColorRGB(int r, int g, int b) {
-		this.r = r / 255.0f;
-		this.g = g / 255.0f;
-		this.b = b / 255.0f;
-	}
-	
-	public ColorRGB(Color color) {
-		this.r = (float) color.getRed();
-		this.g = (float) color.getGreen();
-		this.b = (float) color.getBlue();
-	}
-	
-	public ColorRGB(ColorRGB color) {
-		copy(color);
-	}
-	
+
 	public void copy(ColorRGB color) {
 		this.r = color.r;
 		this.g = color.g;
@@ -79,31 +63,7 @@ public class ColorRGB {
 				Math.round(g * 255),
 				Math.round(b * 255));
 	}
-	
-	public float getR() {
-		return r;
-	}
 
-	public float getG() {
-		return g;
-	}
-
-	public float getB() {
-		return b;
-	}
-
-	public void setR(float r) {
-		this.r = r;
-	}
-
-	public void setG(float g) {
-		this.g = g;
-	}
-
-	public void setB(float b) {
-		this.b = b;
-	}
-	
 	public boolean isWhite() {
 		return r == 1.0f && g == 1.0f && b == 1.0f;
 	}

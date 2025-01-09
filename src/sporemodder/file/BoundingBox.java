@@ -32,12 +32,7 @@ public class BoundingBox {
 	public BoundingBox() {
 		
 	}
-	
-	public BoundingBox(Vector3 min, Vector3 max) {
-		this.min.set(min);
-		this.max.set(max);
-	}
-	
+
 	public Vector3 getMin() {
 		return min;
 	}
