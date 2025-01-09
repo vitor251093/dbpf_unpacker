@@ -73,7 +73,7 @@ public class HashManager {
 
 	private final HashMap<String, NameRegistry> registries = new HashMap<String, NameRegistry>();
 	
-	public void initialize(Properties properties) {
+	public void initialize() {
 		decimalSymbols = new DecimalFormatSymbols(Locale.getDefault());
 		decimalSymbols.setDecimalSeparator('.');
 		decimalFormat = "#.#######";
@@ -81,7 +81,7 @@ public class HashManager {
 		defaultDecimalFormat.setNegativePrefix("-");
 
 		PathManager pathManager = new PathManager();
-		pathManager.initialize(null);
+		pathManager.initialize();
 		try {
 			fileRegistry.read(pathManager.getProgramFile(fileRegistry.getFileName()));
 		} catch (Exception e) {
@@ -113,15 +113,6 @@ public class HashManager {
 
 	public NameRegistry getProjectRegistry() {
 		return projectRegistry;
-	}
-
-	/**
-	 * Returns the string that represents this float, using the default pattern: 7 decimals of precision.
-	 * @param value The value that will be turned into a string.
-	 */
-	public String floatToString(float value) {
-		if (Float.isNaN(value)) return "NaN";
-		return defaultDecimalFormat.format(value);
 	}
 
 	/**
@@ -160,129 +151,6 @@ public class HashManager {
 	}
 	
 	/**
-	 * Returns a string formatted like <code>0xXXXXXXXXXXXXXXXX</code>, replacing the X with the hexadecimal
-	 * representation of the given 64-bit integer. For example, the number 7234234 would return <code>0x00000000006e62ba</code>.
-	 * @param num The long that will be converted into an hexadecimal string.
-	 * @return
-	 */
-	public String hexToString(long num) {
-		return "0x" + String.format("%16s", Long.toHexString(num)).replace(' ', '0');
-	}
-
-	
-	/**
-	 * Returns the equivalent 8-bit signed integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>53</code>: It is parsed as a decimal number, so 53 is returned.
-	 *  <li><code>0xba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so -70 is returned.
-	 *  <li><code>#ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so -70 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 8-bit signed integer (<code>int8</code>).
-	 */
-	public byte int8(String str) {
-		byte result = 0;
-		
-		if (str.startsWith("0x")) {
-			result = (byte) (Short.parseShort(str.substring(2), 16) & 0xFF);
-		}
-		else if (str.startsWith("#")) {
-			result = (byte) (Short.parseShort(str.substring(1), 16) & 0xFF);
-		}
-		else if (str.endsWith("b")) {
-			result = (byte) (Short.parseShort(str.substring(0, str.length() - 1), 2) & 0xFF);
-		}
-		else {
-			result = Byte.parseByte(str);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the equivalent 8-bit unsigned integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>53</code>: It is parsed as a decimal number, so 53 is returned.
-	 *  <li><code>0xba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 186 is returned.
-	 *  <li><code>#ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 186 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 8-bit unsigned integer (<code>uint8</code>).
-	 */
-	public short uint8(String str) {
-		short result = 0;
-		
-		if (str.startsWith("0x")) {
-			result = (short) (Short.parseShort(str.substring(2), 16) & 0xFF);
-		}
-		else if (str.startsWith("#")) {
-			result = (short) (Short.parseShort(str.substring(1), 16) & 0xFF);
-		}
-		else if (str.endsWith("b")) {
-			result = (short) (Short.parseShort(str.substring(0, str.length() - 1), 2) & 0xFF);
-		}
-		else {
-			result = (short) (Short.parseShort(str) & 0xFF);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the equivalent 16-bit signed integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>5340</code>: It is parsed as a decimal number, so 5340 is returned.
-	 *  <li><code>0x00ba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 186 is returned.
-	 *  <li><code>#ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 186 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 16-bit signed integer (<code>int16</code>).
-	 */
-	public short int16(String str) {
-		short result = 0;
-		
-		if (str.startsWith("0x")) {
-			result = (short) (Integer.parseInt(str.substring(2), 16) & 0xFFFF);
-		}
-		else if (str.startsWith("#")) {
-			result = (short) (Integer.parseInt(str.substring(1), 16) & 0xFFFF);
-		}
-		else if (str.endsWith("b")) {
-			result = (short) (Integer.parseInt(str.substring(0, str.length() - 1), 2) & 0xFFFF);
-		}
-		else {
-			result = Short.parseShort(str);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the equivalent 16-bit unsigned integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>-8900</code>: It is parsed as a decimal number, so -8900 is returned.
-	 *  <li><code>0xba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 186 is returned.
-	 *  <li><code>#ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 186 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 16-bit unsigned integer (<code>uint16</code>).
-	 */
-	public int uint16(String str) {
-		int result = 0;
-		
-		if (str.startsWith("0x")) {
-			result = Integer.parseInt(str.substring(2), 16) & 0xFFFF;
-		}
-		else if (str.startsWith("#")) {
-			result = Integer.parseInt(str.substring(1), 16) & 0xFFFF;
-		}
-		else if (str.endsWith("b")) {
-			result = Integer.parseInt(str.substring(0, str.length() - 1), 2) & 0xFFFF;
-		}
-		else {
-			result = Integer.parseInt(str) & 0xFFFF;
-		}
-		
-		return result;
-	}
-	
-	/**
 	 * Returns the equivalent 32-bit signed integer parsed from the given string. The following formats are allowed:
 	 *  <li><code>5309</code>: It is parsed as a decimal number, so 5309 is returned.
 	 *  <li><code>0x6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 7234234 is returned.
@@ -317,116 +185,7 @@ public class HashManager {
 		
 		return result;
 	}
-	
-	/**
-	 * Returns the equivalent 32-bit unsigned integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>5309</code>: It is parsed as a decimal number, so 5309 is returned.
-	 *  <li><code>0x6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 7234234 is returned.
-	 *  <li><code>#6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 7234234 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 *  <li><code>$Creature</code>: The hash of '<i>Creature</i>' is returned, using the {@link #getFileHash(String)} method.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 32-bit unsigned integer (<code>uint32</code>).
-	 */
-	public int uint32(String str) {
-		int result = 0;
-		
-		if (str == null || str.length() == 0) {
-			return 0;
-		}
-		
-		if (str.startsWith("0x")) {
-			result = Integer.parseUnsignedInt(str.substring(2), 16);
-		}
-		else if (str.startsWith("#")) {
-			result = Integer.parseUnsignedInt(str.substring(1), 16);
-		}
-		else if (str.startsWith("$")) {
-			result = getFileHash(str.substring(1));
-		}
-		else if (str.endsWith("b")) {
-			result = Integer.parseUnsignedInt(str.substring(0, str.length() - 1), 2);
-		}
-		else {
-			result = Integer.parseUnsignedInt(str);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the equivalent 64-bit signed integer parsed from the given string. The following formats are allowed:
-	 *  <li><code>5309</code>: It is parsed as a decimal number, so 5309 is returned.
-	 *  <li><code>0x6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 7234234 is returned.
-	 *  <li><code>#6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 7234234 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 *  <li><code>$Creature</code>: The hash of '<i>Creature</i>' is returned, using the {@link #getFileHash(String)} method.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 64-bit signed integer (<code>int64</code>).
-	 */
-	public long int64(String str) {
-		long result = 0;
-		
-		if (str == null || str.length() == 0) {
-			return 0;
-		}
-		
-		if (str.startsWith("0x")) {
-			result = Long.parseUnsignedLong(str.substring(2), 16);
-		}
-		else if (str.startsWith("#")) {
-			result = Long.parseUnsignedLong(str.substring(1), 16);
-		}
-		else if (str.startsWith("$")) {
-			result = Long.parseUnsignedLong(str.substring(1));
-		}
-		else if (str.endsWith("b")) {
-			result = Long.parseUnsignedLong(str.substring(0, str.length() - 1), 2);
-		}
-		else {
-			result = Long.parseLong(str);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * Returns the equivalent 64-bit unsigned integer parsed from the given string. Given that Java's native types only has support for
-	 * signed longs, the result will end up being a signed long with the same bytes as the real, unsigned value.The following formats are allowed:
-	 *  <li><code>5309</code>: It is parsed as a decimal number, so 5309 is returned.
-	 *  <li><code>0x6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>0x</i>, so 7234234 is returned.
-	 *  <li><code>#6e62ba</code>: It is parsed as a hexadecimal number ignoring the <i>#</i>, so 7234234 is returned.
-	 *  <li><code>b10011</code>: It is parsed as a binary number ignoring the <i>b</i>, so 19 is returned.
-	 *  <li><code>$Creature</code>: The hash of '<i>Creature</i>' is returned, using the {@link #getFileHash(String)} method.
-	 * @param str The string to decode into a number.
-	 * @return The equivalent 64-bit unsigned integer (<code>uint64</code>).
-	 */
-	public long uint64(String str) {
-		long result = 0;
-		
-		if (str == null || str.length() == 0) {
-			return 0;
-		}
-		
-		if (str.startsWith("0x")) {
-			result = Long.parseUnsignedLong(str.substring(2), 16);
-		}
-		else if (str.startsWith("#")) {
-			result = Long.parseUnsignedLong(str.substring(1), 16);
-		}
-		else if (str.startsWith("$")) {
-			result = Long.parseUnsignedLong(str.substring(1));
-		}
-		else if (str.endsWith("b")) {
-			result = Long.parseUnsignedLong(str.substring(0, str.length() - 1), 2);
-		}
-		else {
-			result = Long.parseUnsignedLong(str);
-		}
-		
-		return result;
-	}
-	
+
 	/**
 	 * Returns the string that represents the given hash, taken from the instance and group IDs registry (reg_file.txt).
 	 * File hashes are different to the rest because they have support for <i>aliases</i>: Only names that end with the symbol <i>~</i> can be 
@@ -529,31 +288,6 @@ public class HashManager {
 		} 
 		else {
 			Integer i = typeRegistry.getHash(name);
-			if (i == null && extraRegistry != null) {
-				extraRegistry.add(name, fnvHash(name));
-			}
-			return i == null ? fnvHash(name) : i;
-		}
-	}
-	
-	/**
-	 * Returns the integer that represents the hash of the given name, taken from the property IDs registry (reg_prop.txt).
-	 *  <li>If the name is not found in the registry, its FNV hash is returned.
-	 *  <li>If the string begins with <code>0x</code> or <code>#</code>, it will be interpreted as a 8-digit or less hexadecimal number.
-	 *  <li>If the input string is null, this method returns -1.
-	 */
-	public int getPropHash(String name) {
-		if (name == null) {
-			return -1;
-		}
-		if (name.startsWith("#")) {
-			return Integer.parseUnsignedInt(name.substring(1), 16);
-		} 
-		else if (name.startsWith("0x")) {
-			return Integer.parseUnsignedInt(name.substring(2), 16);
-		} 
-		else {
-			Integer i = propRegistry.getHash(name);
 			if (i == null && extraRegistry != null) {
 				extraRegistry.add(name, fnvHash(name));
 			}

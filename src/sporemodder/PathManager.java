@@ -41,7 +41,7 @@ public class PathManager {
 		return null;
 	}
 	
-	public void initialize(Properties properties) {
+	public void initialize() {
 		String protocol = PathManager.class.getResource("PathManager.class").getProtocol();
 		if (Objects.equals(protocol, "jar")) {
 		    // run in jar

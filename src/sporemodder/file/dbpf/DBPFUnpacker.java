@@ -88,7 +88,7 @@ public class DBPFUnpacker {
 
 	private void unpackStream(StreamReader packageStream, HashMap<Integer, List<ResourceKey>> writtenFiles) throws IOException, InterruptedException {
 		HashManager hasher = new HashManager();
-		hasher.initialize(null);
+		hasher.initialize();
 
 		//updateMessage("Reading file index...");
 		
@@ -99,7 +99,6 @@ public class DBPFUnpacker {
 		DBPFIndex index = header.index;
 		index.readItems(packageStream, header.indexCount, header.isDBBF);
 		
-		incProgress(INDEX_PROGRESS / inputFiles.size());
 		//updateMessage("Unpacking files...");
 		
 		double inc = ((1.0 - INDEX_PROGRESS) / header.indexCount) / inputFiles.size();
@@ -195,8 +194,6 @@ public class DBPFUnpacker {
 			catch (Exception e) {
 				exceptions.put(item, e);
 			}
-			
-			incProgress(inc);
 		}
 		
 		// Remove the extra names; if they need to be used, loading the project will load them as well
@@ -216,7 +213,6 @@ public class DBPFUnpacker {
 			
 			for (File inputFile : inputFiles) {
 				if (!inputFile.exists()) {
-					incProgress(100.0f / inputFiles.size());
 					failedDBPFs.add(inputFile);
 					continue;
 				}
@@ -233,18 +229,5 @@ public class DBPFUnpacker {
 		}
 
 		return null;
-	}
-
-	private void incProgress(double increment) {
-
-	}
-
-	public static void main(String[] args) throws Exception {
-		// Note: The output folder must already exist
-		File inputFile = new File("/home/vitor/Projects/recap/darkspore/5.3.0.127/Data/ServerData.package");
-		File ooutputFile = new File("/home/vitor/Projects/recap/darkspore/5.3.0.127/Data/ServerData.package.out");
-		List<Converter> converters = List.of(new DBPFConverter());
-		var unpacker = new DBPFUnpacker(inputFile, ooutputFile, converters);
-		unpacker.call();
 	}
 }
