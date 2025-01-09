@@ -53,15 +53,6 @@ public class PathManager {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			if (programFolder == null || !programFolder.exists())
-			{
-				try {
-					programFolder = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI().getPath());
-				} catch (URISyntaxException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 			
 			if (programFolder == null || !programFolder.exists()) {
 				programFolder = new File(System.getProperty("user.dir"));
