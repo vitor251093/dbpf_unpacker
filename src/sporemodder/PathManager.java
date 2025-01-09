@@ -71,11 +71,6 @@ public class PathManager {
 			programFolder = new File(System.getProperty("user.dir"));
 		}
 	}
-
-	/** Returns the folder where SporeModder projects are. */
-	public File getProjectsFolder() {
-		return null;
-	}
 	
 	/**
 	 * Returns the file that corresponds to the given relative path, in the program folder. For example, if the program is at
