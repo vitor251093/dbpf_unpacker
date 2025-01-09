@@ -40,9 +40,8 @@ import sporemodder.file.ResourceKey;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
-import sporemodder.util.ResumableTask;
 
-public class DBPFUnpackingTask extends ResumableTask<Exception> {
+public class DBPFUnpackingTask {
 	
 	@FunctionalInterface
 	public static interface DBPFItemFilter {
@@ -91,21 +90,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		this.outputFolder = outputFolder;
 	}
 
-	@Override protected void updateMessage(String message) {
-		if (!noJavaFX) {
-			super.updateMessage(message);
-		}
-	}
-	
-	@Override protected void updateProgress(double workDone, double max) {
-		if (noJavaFX) {
-			noJavaFXProgressListener.accept(workDone);
-		}
-		else {
-			super.updateProgress(workDone, max);
-		}
-	}
-
 	/**
 	 * Returns the project that is being unpacked. This might be null if a file is being unpacked directly.
 	 * @return
@@ -133,8 +117,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 	private void unpackStream(StreamReader packageStream, Map<Integer, Set<ResourceKey>> writtenFiles, double progressFraction) throws IOException, InterruptedException {
 		HashManager hasher = HashManager.get();
 			
-		updateMessage("Reading file index...");
-
 		DatabasePackedFile header = new DatabasePackedFile();
 		header.readHeader(packageStream);
 		header.readIndex(packageStream);
@@ -145,8 +127,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		incProgress(INDEX_PROGRESS * progressFraction);
 		// How much each file adds to the progress
 		double inc = (1.0 - INDEX_PROGRESS) * progressFraction / header.indexCount;
-		
-		updateMessage("Unpacking files...");
 		
 		//First search sporemaster/names.txt, and use it if it exists
 		hasher.getProjectRegistry().clear();
@@ -161,8 +141,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		CountDownLatch latch = new CountDownLatch(index.items.size());
 		for (DBPFItem item : index.items) {
 			++itemIndex;
-			// Ensure the task is not paused
-			ensureRunning();
 			
 			if (itemFilter != null && !itemFilter.filter(item)) {
 				latch.countDown();
@@ -228,7 +206,6 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		hasher.getProjectRegistry().clear();
 	}
 	
-	@Override
 	public Exception call() throws Exception {
 		
 		long initialTime = System.currentTimeMillis();
@@ -271,17 +248,12 @@ public class DBPFUnpackingTask extends ResumableTask<Exception> {
 		}
 		
 		ellapsedTime = System.currentTimeMillis() - initialTime;
-		
-		// Ensure the taskbar progress is over
-		updateProgress(1.0, 1.0);
-		updateMessage("Finished");
-		
+
 		return null;
 	}
 
 	private void incProgress(double increment) {
 		progress += increment;
-		updateProgress(progress, 1.0);
 	}
 
 	private class FileConvertAction extends RecursiveAction {

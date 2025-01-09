@@ -27,7 +27,7 @@ public class Main {
             File inputFile = new File(args[0]);
             File outputFile = new File(args[1]);
             if (!outputFile.exists()) {
-                if (outputFile.mkdirs()) {
+                if (!outputFile.mkdirs()) {
                     System.err.println("dbpf_unpacker v" + version);
                     System.err.println("  error: could not create output folder");
                     return;
