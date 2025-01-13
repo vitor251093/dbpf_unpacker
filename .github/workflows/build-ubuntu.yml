@@ -47,10 +47,10 @@ jobs:
         run: |
           mkdir -p bin_output
           mv dbpf_unpacker bin_output/
-          mv ./*.txt bin_output/
+          mv ./registries/*.txt bin_output/
 
       - name: Upload Native Binary and Registry Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dbpf_unpacker-linux-x64
           path: bin_output/*

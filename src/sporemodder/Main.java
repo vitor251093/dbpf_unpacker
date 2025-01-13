@@ -10,17 +10,11 @@ import java.util.logging.*;
 
 public class Main {
 
-    public static String version = "1.0.0";
+    public static String version = "1.0.2";
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) throws Exception {
-
-        Logger rootLogger = Logger.getLogger("");
-        rootLogger.setLevel(Level.INFO);
-        ConsoleHandler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
-        rootLogger.addHandler(handler);
 
         boolean debug = false;
 
@@ -48,7 +42,7 @@ public class Main {
             } else {
                 System.err.println("  error: too many arguments");
             }
-            System.err.println("  usage: java -jar dbpf_unpacker.jar [-d|--debug] <file> <destination>");
+            System.err.println("  usage: dbpf_unpacker.exe [-d|--debug] <file> <destination>");
             System.exit(1);
         }
 
