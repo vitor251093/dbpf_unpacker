@@ -11,6 +11,7 @@ on:
 jobs:
   build-native-image:
     runs-on: windows-latest
+    name: Build Windows
 
     steps:
       - name: Check out repository
@@ -53,8 +54,15 @@ jobs:
           copy ./dbpf_unpacker.exe bin_output/
           copy ./registries/*.txt bin_output/
 
-      - name: Upload Native Binary and Registry Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: dbpf_unpacker-windows-x64
-          path: bin_output/*
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          $version = bash ./calculate_new_version.sh
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+    - name: Upload Native Binary and Registry Files
+      uses: actions/upload-artifact@v4
+      with:
+        name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_win64
+        path: bin_output/*

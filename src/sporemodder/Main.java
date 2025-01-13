@@ -6,13 +6,12 @@ import sporemodder.file.dbpf.DBPFUnpacker;
 
 import java.io.File;
 import java.util.List;
-import java.util.logging.*;
 
 public class Main {
 
-    public static String version = "1.0.2";
+    public static String version = "1.0.0";
 
-    private static final Logger logger = Logger.getLogger(Main.class.getName());
+    private static final Logger logger = LoggerManager.getLogger(Main.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -22,19 +21,16 @@ public class Main {
         if (args.length > 0 && (args[0].equals("-d") || args[0].equals("--debug"))) {
             debug = true;
             System.out.println("Debug mode enabled");
-
-            // Configuração do logger para modo debug
-            configureLogger(Level.FINE);
-        } else {
-            // Configuração do logger para modo normal
-            configureLogger(Level.INFO);
         }
+
+        // Inicializa o logger globalmente
+        LoggerManager.initialize(debug);
 
         // Ajusta os índices dependendo se o modo debug está ativo
         int fileArgIndex = debug ? 1 : 0;
 
         if (args.length != (fileArgIndex + 2)) {
-            System.err.println("dbpf_unpacker v" + version);
+            System.err.println("DBPF Unpacker"); // + version
             if (args.length == 0 || (debug && args.length == 1)) {
                 System.err.println("  error: no input file provided");
             } else if (args.length == (fileArgIndex + 1)) {
@@ -64,55 +60,73 @@ public class Main {
         }
 
         if (debug) {
-            System.out.println("Input file: " + inputFile.getAbsolutePath());
-            System.out.println("Output directory: " + outputFile.getAbsolutePath());
+            logger.fine("Input file: " + inputFile.getAbsolutePath());
+            logger.fine("Output directory: " + outputFile.getAbsolutePath());
         }
 
-        logger.info("Starting unpacking process...");
+        logger.fine("Starting unpacking process...");
         logger.fine("Fine level log message for testing");
-        logger.info("Input file: " + inputFile.getAbsolutePath());
-        logger.info("Output directory: " + outputFile.getAbsolutePath());
+        logger.fine("Input file: " + inputFile.getAbsolutePath());
+        logger.fine("Output directory: " + outputFile.getAbsolutePath());
 
         List<Converter> converters = List.of(new DBPFConverter());
         try {
-            logger.info("Creating DBPFUnpacker...");
+            logger.fine("Creating DBPFUnpacker...");
             var unpacker = new DBPFUnpacker(inputFile, outputFile, converters);
 
-            logger.info("Starting unpacking process...");
+            logger.fine("Starting unpacking process...");
             unpacker.call();
-            logger.info("Unpacking completed successfully.");
+            logger.fine("Unpacking completed successfully.");
         } catch (Exception e) {
             logger.severe("An error occurred during unpacking: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
 
-        logger.info("Unpacking process finished.");
+        logger.fine("Unpacking process finished.");
     }
 
     private static void configureLogger(Level level) {
-        // Agora, configuramos apenas o logger da classe Main
-        logger.setLevel(level);
-
-        // Remove todos os handlers existentes
-        for (Handler handler : logger.getHandlers()) {
-            logger.removeHandler(handler);
+        // Configura o nível do logger root e remove handlers existentes
+        Logger rootLogger = Logger.getLogger("");
+        rootLogger.setLevel(level);
+        
+        for (Handler handler : rootLogger.getHandlers()) {
+            rootLogger.removeHandler(handler);
         }
 
-        // Adiciona um novo ConsoleHandler
+        // Configura o novo handler com o nível especificado
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(level);
-
-        // Define um formatador simples
+        
         handler.setFormatter(new SimpleFormatter() {
             @Override
             public String format(LogRecord record) {
-                return String.format("[%s] %s%n", record.getLevel(), record.getMessage());
+                // Só exibe logs se estiverem no nível correto
+                if (record.getLevel().intValue() >= level.intValue()) {
+                    return String.format("[%s] %s%n", record.getLevel(), record.getMessage());
+                }
+                return ""; // Retorna string vazia para outros níveis
+            }
+        });
+        
+        rootLogger.addHandler(handler);
+        
+        // Configura todos os loggers existentes para usar o mesmo nível
+        LogManager.getLogManager().getLoggerNames().asIterator().forEachRemaining(name -> {
+            Logger logger = LogManager.getLogManager().getLogger(name);
+            if (logger != null) {
+                logger.setLevel(level);
+                // Remove handlers específicos de outros loggers
+                for (Handler h : logger.getHandlers()) {
+                    logger.removeHandler(h);
+                }
             }
         });
 
-        logger.addHandler(handler);
-
-        logger.info("Logger configured with level: " + level);
+        // Só exibe essa mensagem se estivermos em modo debug
+        if (level == Level.FINE) {
+            logger.fine("Logger configured with level: " + level);
+        }
     }
 }

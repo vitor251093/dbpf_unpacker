@@ -37,8 +37,7 @@ import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import sporemodder.MessageManager;
-import sporemodder.MessageManager.MessageType;
+import sporemodder.LoggerManager;
 import sporemodder.file.Converter;
 
 import sporemodder.HashManager;
@@ -61,7 +60,7 @@ public class DBPFUnpackingTask {
 
 	private List<Converter> converters = new ArrayList<>();
 
-	private static final Logger logger = Logger.getLogger(DBPFUnpackingTask.class.getName());
+	private static final Logger logger = LoggerManager.getLogger(DBPFUnpackingTask.class);
 
 	// Cannot use getProgress() as it throws thread exception
 	private double progress = 0;
@@ -220,32 +219,32 @@ public class DBPFUnpackingTask {
 	}
 
 	private void unpackStream(StreamReader packageStream, Map<Integer, Set<ResourceKey>> writtenFiles, double progressFraction) throws IOException, InterruptedException {
-		logger.info("Starting to unpack stream");
+		logger.fine("Starting to unpack stream");
 		HashManager hasher = HashManager.get();
 
 		DatabasePackedFile header = new DatabasePackedFile();
-		logger.info("Reading DBPF header");
+		logger.fine("Reading DBPF header");
 		header.readHeader(packageStream);
-		logger.info("Reading DBPF index");
+		logger.fine("Reading DBPF index");
 		header.readIndex(packageStream);
 
 		DBPFIndex index = header.index;
-		logger.info("Reading " + header.indexCount + " items from index");
+		logger.fine("Reading " + header.indexCount + " items from index");
 		index.readItems(packageStream, header.indexCount, header.isDBBF);
 
 		incProgress(INDEX_PROGRESS * progressFraction);
 		double inc = (1.0 - INDEX_PROGRESS) * progressFraction / header.indexCount;
 
-		logger.info("Searching for sporemaster/names.txt");
+		logger.fine("Searching for sporemaster/names.txt");
 		hasher.getProjectRegistry().clear();
 		findNamesFile(index.items, packageStream);
 
 		int maxTasks = ForkJoinPool.getCommonPoolParallelism();
-		logger.info("Max parallel tasks: " + maxTasks);
+		logger.fine("Max parallel tasks: " + maxTasks);
 
 		int itemIndex = -1;
 		CountDownLatch latch = new CountDownLatch(index.items.size());
-		logger.info("Processing " + index.items.size() + " items");
+		logger.fine("Processing " + index.items.size() + " items");
 		for (DBPFItem item : index.items) {
 			++itemIndex;
 
@@ -310,23 +309,23 @@ public class DBPFUnpackingTask {
 			}
 		}
 
-		logger.info("Waiting for all files to finish writing");
+		logger.fine("Waiting for all files to finish writing");
 		latch.await();
 
-		logger.info("Clearing extra names from registry");
+		logger.fine("Clearing extra names from registry");
 		hasher.getProjectRegistry().clear();
 	}
 
 	public Exception call() throws Exception {
-		logger.info("DBPFUnpackingTask started");
+		logger.fine("DBPFUnpackingTask started");
 		long initialTime = System.currentTimeMillis();
 
 		if (inputStream != null) {
-			logger.info("Unpacking from input stream");
+			logger.fine("Unpacking from input stream");
 			unpackStream(inputStream, null, 1.0);
 		}
 		else {
-			logger.info("Unpacking from " + inputFiles.size() + " input files");
+			logger.fine("Unpacking from " + inputFiles.size() + " input files");
 			double progressFactor = 1.0;
 			
 			final HashMap<Integer, Set<ResourceKey>> writtenFiles = new HashMap<>();
@@ -343,7 +342,7 @@ public class DBPFUnpackingTask {
 
 			int i = 0;
 			for (File inputFile : inputFiles) {
-				logger.info("Processing file: " + inputFile.getAbsolutePath());
+				logger.fine("Processing file: " + inputFile.getAbsolutePath());
 				double projectProgress = progressFactor * (double)fileSizes[i] / totalFileSize;
 
 				if (!inputFile.exists()) {
@@ -365,7 +364,7 @@ public class DBPFUnpackingTask {
 		}
 
 		ellapsedTime = System.currentTimeMillis() - initialTime;
-		logger.info("DBPFUnpackingTask completed in " + ellapsedTime + "ms");
+		logger.fine("DBPFUnpackingTask completed in " + ellapsedTime + "ms");
 
 		return null;
 	}

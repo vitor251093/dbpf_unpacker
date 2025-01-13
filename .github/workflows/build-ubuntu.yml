@@ -11,6 +11,7 @@ on:
 jobs:
   build-native-image:
     runs-on: ubuntu-latest
+    name: Build Ubuntu
 
     steps:
       - name: Check out repository
@@ -49,8 +50,14 @@ jobs:
           mv dbpf_unpacker bin_output/
           mv ./registries/*.txt bin_output/
 
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          chmod +x ./calculate_new_version.sh
+          echo "version=$(./calculate_new_version.sh)" >> $GITHUB_OUTPUT
+
       - name: Upload Native Binary and Registry Files
         uses: actions/upload-artifact@v4
         with:
-          name: dbpf_unpacker-linux-x64
+          name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_linux-x64
           path: bin_output/*

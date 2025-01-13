@@ -1,11 +1,11 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="sporemodderfx:jar">
+  <artifact type="jar" name="dbpf_unpacker:jar">
     <output-path>$PROJECT_DIR$/artifacts</output-path>
-    <root id="archive" name="sporemodderfx.jar">
+    <root id="archive" name="dbpf_unpacker.jar">
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
       </element>
-      <element id="module-output" name="sporemodderfx" />
+      <element id="module-output" name="dbpf_unpacker" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/json/json/20230227/json-20230227.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/fxmisc/richtext/richtextfx/0.11.0/richtextfx-0.11.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/nikr/dds/1.0.0/dds-1.0.0.jar" path-in-jar="/" />

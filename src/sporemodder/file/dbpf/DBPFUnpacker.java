@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
+import sporemodder.LoggerManager;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
@@ -41,7 +42,7 @@ import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 
 public class DBPFUnpacker {
-	private static final Logger logger = Logger.getLogger(DBPFUnpacker.class.getName());
+	private static final Logger logger = LoggerManager.getLogger(DBPFUnpackingTask.class);
 
 	@FunctionalInterface
 	public static interface DBPFItemFilter {
@@ -59,7 +60,7 @@ public class DBPFUnpacker {
 	private DBPFItemFilter itemFilter;
 
 	public DBPFUnpacker(File inputFile, File outputFolder, List<Converter> converters) {
-		logger.info("Initializing DBPFUnpacker with input file: " + inputFile.getAbsolutePath());
+		logger.fine("Initializing DBPFUnpacker with input file: " + inputFile.getAbsolutePath());
 		this.inputFiles.add(inputFile);
 		this.outputFolder = outputFolder;
 		this.converters = converters;
@@ -73,28 +74,28 @@ public class DBPFUnpacker {
 
 		for (DBPFItem item : items) {
 			if (item.name.getGroupID() == group && item.name.getInstanceID() == name) {
-				logger.info("Names file found. Reading project registry...");
+				logger.fine("Names file found. Reading project registry...");
 				try (ByteArrayInputStream arrayStream = new ByteArrayInputStream(item.processFile(in).getRawData());
 					 BufferedReader reader = new BufferedReader(new InputStreamReader(arrayStream))) {
 					hasher.getProjectRegistry().read(reader);
 				}
-				logger.info("Project registry read successfully.");
+				logger.fine("Project registry read successfully.");
 				return;
 			}
 		}
-		logger.info("Names file not found.");
+		logger.fine("Names file not found.");
 	}
 
 	private void loadRegistry(HashManager hasher) {
-		logger.info("Attempting to load registry file...");
+		logger.fine("Attempting to load registry file...");
 
 		// Tenta carregar do diretório de execução
 		File externalFile = new File("reg_file.txt");
 		if (externalFile.exists()) {
 			try {
-				logger.info("Loading registry from external file: " + externalFile.getAbsolutePath());
+				logger.fine("Loading registry from external file: " + externalFile.getAbsolutePath());
 				hasher.getProjectRegistry().read(Files.newBufferedReader(externalFile.toPath()));
-				logger.info("Registry loaded successfully from external file.");
+				logger.fine("Registry loaded successfully from external file.");
 				return;
 			} catch (IOException e) {
 				logger.warning("Failed to load external registry file: " + e.getMessage());
@@ -104,9 +105,9 @@ public class DBPFUnpacker {
 		// Se falhar, tenta carregar do recurso interno
 		try (InputStream is = DBPFUnpacker.class.getResourceAsStream("/reg_file.txt")) {
 			if (is != null) {
-				logger.info("Loading registry from internal resource.");
+				logger.fine("Loading registry from internal resource.");
 				hasher.getProjectRegistry().read(new BufferedReader(new InputStreamReader(is)));
-				logger.info("Registry loaded successfully from internal resource.");
+				logger.fine("Registry loaded successfully from internal resource.");
 			} else {
 				logger.severe("Registry file not found as internal resource.");
 			}
@@ -116,13 +117,13 @@ public class DBPFUnpacker {
 	}
 
 	private void unpackStream(StreamReader packageStream, HashMap<Integer, List<ResourceKey>> writtenFiles) throws IOException, InterruptedException {
-		logger.info("Starting to unpack stream...");
+		logger.fine("Starting to unpack stream...");
 		HashManager hasher = new HashManager();
 		hasher.initialize();
 
 		loadRegistry(hasher);
 
-		logger.info("Reading file index...");
+		logger.fine("Reading file index...");
 
 		DatabasePackedFile header = new DatabasePackedFile();
 		header.readHeader(packageStream);
@@ -131,8 +132,8 @@ public class DBPFUnpacker {
 		DBPFIndex index = header.index;
 		index.readItems(packageStream, header.indexCount, header.isDBBF);
 
-		logger.info("File index read. Total items: " + header.indexCount);
-		logger.info("Unpacking files...");
+		logger.fine("File index read. Total items: " + header.indexCount);
+		logger.fine("Unpacking files...");
 
 		double inc = ((1.0 - INDEX_PROGRESS) / header.indexCount) / inputFiles.size();
 
@@ -182,7 +183,7 @@ public class DBPFUnpacker {
 							if (converter.decode(dataStream, folder, item.name)) {
 								isConverted = true;
 								convertedItems++;
-								logger.info("Converted file: " + item.name);
+								logger.fine("Converted file: " + item.name);
 								break;
 							}
 						}
@@ -193,7 +194,7 @@ public class DBPFUnpacker {
 					String name = hasher.getFileName(item.name.getInstanceID()) + "." + hasher.getTypeName(item.name.getTypeID());
 					File outputFile = new File(folder, name);
 					dataStream.writeToFile(outputFile);
-					logger.info("Saved raw file: " + outputFile.getAbsolutePath());
+					logger.fine("Saved raw file: " + outputFile.getAbsolutePath());
 				}
 
 				if (writtenFiles != null) {
@@ -206,11 +207,11 @@ public class DBPFUnpacker {
 			}
 
 			if (processedItems % 100 == 0) {
-				logger.info("Progress: " + processedItems + " / " + header.indexCount + " items processed");
+				logger.fine("Progress: " + processedItems + " / " + header.indexCount + " items processed");
 			}
 		}
 
-		logger.info("Unpacking completed. Total items: " + header.indexCount +
+		logger.fine("Unpacking completed. Total items: " + header.indexCount +
 				", Processed: " + processedItems +
 				", Converted: " + convertedItems +
 				", Skipped: " + skippedItems +
@@ -220,15 +221,15 @@ public class DBPFUnpacker {
 	}
 
 	public Exception call() throws Exception {
-		logger.info("Starting DBPFUnpacker.call()");
+		logger.fine("Starting DBPFUnpacker.call()");
 		long initialTime = System.currentTimeMillis();
 
 		if (inputStream != null) {
-			logger.info("Unpacking from input stream");
+			logger.fine("Unpacking from input stream");
 			unpackStream(inputStream, null);
 		}
 		else {
-			logger.info("Unpacking from " + inputFiles.size() + " input files");
+			logger.fine("Unpacking from " + inputFiles.size() + " input files");
 			final HashMap<Integer, List<ResourceKey>> writtenFiles = new HashMap<Integer, List<ResourceKey>>();
 			boolean checkFiles = inputFiles.size() > 1;
 
@@ -239,7 +240,7 @@ public class DBPFUnpacker {
 					continue;
 				}
 
-				logger.info("Processing file: " + inputFile.getAbsolutePath());
+				logger.fine("Processing file: " + inputFile.getAbsolutePath());
 				for (Converter converter : converters) converter.reset();
 
 				try (StreamReader packageStream = new FileStream(inputFile, "r"))  {
@@ -253,7 +254,7 @@ public class DBPFUnpacker {
 		}
 
 		long endTime = System.currentTimeMillis();
-		logger.info("DBPFUnpacker.call() completed in " + (endTime - initialTime) + "ms");
+		logger.fine("DBPFUnpacker.call() completed in " + (endTime - initialTime) + "ms");
 		return null;
 	}
 }

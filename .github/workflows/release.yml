@@ -1,0 +1,65 @@
+name: Create Release
+
+on:
+  workflow_run:
+    workflows: ["Build dbpf_unpacker (Windows)", "Build dbpf_unpacker (Ubuntu)"]
+    types:
+      - completed
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          chmod +x ./calculate_new_version.sh
+          echo "version=$(./calculate_new_version.sh)" >> $GITHUB_OUTPUT
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_win64
+          path: artifacts/windows
+
+      - name: Download Ubuntu artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_linux-x64
+          path: artifacts/ubuntu
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.calculate_version.outputs.version }}
+          release_name: DBPF Unpacker v${{ steps.calculate_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/windows/DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_win64.zip
+          asset_name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_win64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset (Ubuntu)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/ubuntu/DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_linux-x64.zip
+          asset_name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_linux-x64.zip
+          asset_content_type: application/zip
