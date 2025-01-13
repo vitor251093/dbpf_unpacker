@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# Add debug output
-echo "Fetching tags..."
+# Fetch tags
 git fetch --tags
-
-echo "Current tags:"
-git tag
 
 # Get the latest tag or use a default version if no tag exists
 current_version=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-
-echo "Current version: $current_version"
 
 # Remove the 'v' prefix if it exists
 current_version="${current_version#v}"
@@ -28,5 +22,4 @@ new_patch=$((patch + 1))
 
 # Output the new version
 new_version="${major}.${minor}.${new_patch}"
-echo "New version: $new_version"
 echo "$new_version"
