@@ -1,0 +1,139 @@
+name: Build and Release DBPF Unpacker
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  get-info:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.calculate_version.outputs.version }}
+      date: ${{ steps.vars.outputs.date }}
+      shorthash: ${{ steps.vars.outputs.shorthash }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: List tags
+      run: git tag
+    - name: Calculate version
+      id: calculate_version
+      run: |
+        chmod +x ./calculate_new_version.sh
+        echo "version=$(./calculate_new_version.sh)" >> $GITHUB_OUTPUT
+    - name: Get date and git hash
+      id: vars
+      run: |
+        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        echo "shorthash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+
+  build-windows:
+    needs: get-info
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '17'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build for Windows
+      run: |
+        mkdir build
+        javac -deprecation -Werror -d build -sourcepath src src/sporemodder/*.java
+        mkdir bin
+        jar -cfm bin/dbpf_unpacker.jar src/sporemodder/Manifest.mf -C build .
+        native-image -jar bin/dbpf_unpacker.jar -H:Name=dbpf_unpacker -H:Class=sporemodder.Main -H:NativeLinkerOption="${{ github.workspace }}/res/dbpf_unpacker.res"
+    - name: Package Windows artifact
+      run: |
+        mkdir bin_output
+        copy ./dbpf_unpacker.exe bin_output/
+        copy ./registries/*.txt bin_output/
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: DBPF-Unpacker-${{ needs.get-info.outputs.version }}_win64
+        path: bin_output/*
+
+  build-ubuntu:
+    needs: get-info
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up GraalVM
+      uses: graalvm/setup-graalvm@v1
+      with:
+        java-version: '17'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build for Ubuntu
+      run: |
+        mkdir build
+        javac -deprecation -Werror -d build -sourcepath src src/sporemodder/*.java
+        mkdir bin
+        jar -cfm bin/dbpf_unpacker.jar src/sporemodder/Manifest.mf -C build .
+        native-image -jar bin/dbpf_unpacker.jar -H:Name=dbpf_unpacker -H:Class=sporemodder.Main
+    - name: Package Ubuntu artifact
+      run: |
+        mkdir -p bin_output
+        mv dbpf_unpacker bin_output/
+        cp ./registries/*.txt bin_output/
+    - name: Upload Ubuntu artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: DBPF-Unpacker-${{ needs.get-info.outputs.version }}_linux-x64
+        path: bin_output/*
+
+  create-release:
+    needs: [get-info, build-windows, build-ubuntu]
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - name: Prepare release assets
+      run: |
+        cd artifacts
+        for dir in */; do
+          (cd "$dir" && zip -r "../${dir%/}.zip" .)
+        done
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.get-info.outputs.version }}
+        release_name: DBPF Unpacker v${{ needs.get-info.outputs.version }}
+        draft: false
+        prerelease: false
+        body: |
+          Release of DBPF Unpacker v${{ needs.get-info.outputs.version }}
+          
+          Date: ${{ needs.get-info.outputs.date }}
+          Commit: ${{ needs.get-info.outputs.shorthash }}
+    - name: Upload Windows Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/DBPF-Unpacker-${{ needs.get-info.outputs.version }}_win64.zip
+        asset_name: DBPF-Unpacker-${{ needs.get-info.outputs.version }}_win64.zip
+        asset_content_type: application/zip
+    - name: Upload Ubuntu Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/DBPF-Unpacker-${{ needs.get-info.outputs.version }}_linux-x64.zip
+        asset_name: DBPF-Unpacker-${{ needs.get-info.outputs.version }}_linux-x64.zip
+        asset_content_type: application/zip

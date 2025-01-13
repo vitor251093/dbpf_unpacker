@@ -1,32 +1,39 @@
 /****************************************************************************
-* Copyright (C) 2019 Eric Mor
-*
-* This file is part of SporeModder FX.
-*
-* SporeModder FX is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
+ * Copyright (C) 2019 Eric Mor
+ *
+ * This file is part of SporeModder FX.
+ *
+ * SporeModder FX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ****************************************************************************/
 package sporemodder.file.dbpf;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
+import sporemodder.LoggerManager;
 import sporemodder.file.filestructures.FileStream;
 import sporemodder.file.filestructures.MemoryStream;
 import sporemodder.file.filestructures.StreamReader;
@@ -35,37 +42,25 @@ import sporemodder.file.Converter;
 import sporemodder.file.ResourceKey;
 
 public class DBPFUnpacker {
-	
+	private static final Logger logger = LoggerManager.getLogger(DBPFUnpackingTask.class);
+
 	@FunctionalInterface
 	public static interface DBPFItemFilter {
 		public boolean filter(DBPFItem item);
 	}
-	
-	/** The estimated progress (in [0, 1]) that reading the index takes. */ 
+
 	private static final double INDEX_PROGRESS = 0.15;
 
-	/** The list of input DBPF files, in order of priority. */
 	private final List<File> inputFiles = new ArrayList<File>();
-	
-	/** Alternative input, an StreamReader. */
 	private final StreamReader inputStream;
-	
-	/** The list of input DBPF files that could not be unpacked (because they didn't exist). */
 	private final List<File> failedDBPFs = new ArrayList<File>();
-	
-	/** The folder where all the contents will be written. */
 	private File outputFolder;
-	
-	/** We will keep all files that couldn't be converted here, so that we can keep unpacking the DBPF. */
 	private final HashMap<DBPFItem, Exception> exceptions = new HashMap<DBPFItem, Exception>();
-	
-	/** All the converters used .*/
 	private final List<Converter> converters;
-
-	/** An optional filter that defines which items should be unpacked (true) and which shouldn't (false). */
 	private DBPFItemFilter itemFilter;
 
 	public DBPFUnpacker(File inputFile, File outputFolder, List<Converter> converters) {
+		logger.fine("Initializing DBPFUnpacker with input file: " + inputFile.getAbsolutePath());
 		this.inputFiles.add(inputFile);
 		this.outputFolder = outputFolder;
 		this.converters = converters;
@@ -73,161 +68,193 @@ public class DBPFUnpacker {
 	}
 
 	private static void findNamesFile(List<DBPFItem> items, StreamReader in, HashManager hasher) throws IOException {
+		logger.fine("Searching for names file...");
 		int group = hasher.getFileHash("sporemaster");
 		int name = hasher.getFileHash("names");
-		
+
 		for (DBPFItem item : items) {
 			if (item.name.getGroupID() == group && item.name.getInstanceID() == name) {
+				logger.fine("Names file found. Reading project registry...");
 				try (ByteArrayInputStream arrayStream = new ByteArrayInputStream(item.processFile(in).getRawData());
-						BufferedReader reader = new BufferedReader(new InputStreamReader(arrayStream))) {
+					 BufferedReader reader = new BufferedReader(new InputStreamReader(arrayStream))) {
 					hasher.getProjectRegistry().read(reader);
 				}
+				logger.fine("Project registry read successfully.");
+				return;
 			}
+		}
+		logger.fine("Names file not found.");
+	}
+
+	private void loadRegistry(HashManager hasher) {
+		logger.fine("Attempting to load registry file...");
+
+		// Tenta carregar do diretório de execução
+		File externalFile = new File("reg_file.txt");
+		if (externalFile.exists()) {
+			try {
+				logger.fine("Loading registry from external file: " + externalFile.getAbsolutePath());
+				hasher.getProjectRegistry().read(Files.newBufferedReader(externalFile.toPath()));
+				logger.fine("Registry loaded successfully from external file.");
+				return;
+			} catch (IOException e) {
+				logger.warning("Failed to load external registry file: " + e.getMessage());
+			}
+		}
+
+		// Se falhar, tenta carregar do recurso interno
+		try (InputStream is = DBPFUnpacker.class.getResourceAsStream("/reg_file.txt")) {
+			if (is != null) {
+				logger.fine("Loading registry from internal resource.");
+				hasher.getProjectRegistry().read(new BufferedReader(new InputStreamReader(is)));
+				logger.fine("Registry loaded successfully from internal resource.");
+			} else {
+				logger.severe("Registry file not found as internal resource.");
+			}
+		} catch (IOException e) {
+			logger.severe("Failed to load registry file: " + e.getMessage());
 		}
 	}
 
 	private void unpackStream(StreamReader packageStream, HashMap<Integer, List<ResourceKey>> writtenFiles) throws IOException, InterruptedException {
+		logger.fine("Starting to unpack stream...");
 		HashManager hasher = new HashManager();
 		hasher.initialize();
 
-		//updateMessage("Reading file index...");
-		
+		loadRegistry(hasher);
+
+		logger.fine("Reading file index...");
+
 		DatabasePackedFile header = new DatabasePackedFile();
 		header.readHeader(packageStream);
 		header.readIndex(packageStream);
-		
+
 		DBPFIndex index = header.index;
 		index.readItems(packageStream, header.indexCount, header.isDBBF);
-		
-		//updateMessage("Unpacking files...");
-		
+
+		logger.fine("File index read. Total items: " + header.indexCount);
+		logger.fine("Unpacking files...");
+
 		double inc = ((1.0 - INDEX_PROGRESS) / header.indexCount) / inputFiles.size();
-		
-		//First search sporemaster/names.txt, and use it if it exists
+
 		hasher.getProjectRegistry().clear();
 		findNamesFile(index.items, packageStream, hasher);
-		
+
+		int processedItems = 0;
+		int convertedItems = 0;
+		int skippedItems = 0;
+
 		for (DBPFItem item : index.items) {
-			// Ensure the task is not paused
-			//ensureRunning();
-			
-			if (itemFilter != null && !itemFilter.filter(item)) continue;
-			
-			int groupID = item.name.getGroupID();
-			int instanceID = item.name.getInstanceID();
-			
-			if (writtenFiles != null) {
-				List<ResourceKey> list = writtenFiles.get(groupID);
-				if (list != null) {
-					boolean skipFile = false;
-					for (ResourceKey key : list) {
-						if (key.isEquivalent(item.name)) {
-							skipFile = true;
-							break;
-						}
-					}
-					if (skipFile) continue;
-				}
-			}
-			
-			String fileName = hasher.getFileName(instanceID);
-			
-			// skip autolocale files
-			if (groupID == 0x02FABF01 && fileName.startsWith("auto_")) {
+			processedItems++;
+
+			if (itemFilter != null && !itemFilter.filter(item)) {
+				skippedItems++;
 				continue;
 			}
-			
-			
+
+			int groupID = item.name.getGroupID();
+			int instanceID = item.name.getInstanceID();
+
+			if (writtenFiles != null) {
+				List<ResourceKey> list = writtenFiles.get(groupID);
+				if (list != null && list.stream().anyMatch(key -> key.isEquivalent(item.name))) {
+					skippedItems++;
+					continue;
+				}
+			}
+
+			String fileName = hasher.getFileName(instanceID);
+
+			if (groupID == 0x02FABF01 && fileName.startsWith("auto_")) {
+				skippedItems++;
+				continue;
+			}
+
 			File folder = new File(outputFolder, hasher.getFileName(groupID));
 			folder.mkdir();
-			
+
 			try (MemoryStream dataStream = item.processFile(packageStream)) {
-				
-				// Has the file been converted?
 				boolean isConverted = false;
-				
-				// Do not convert editor packages
-				if (groupID == 0x40404000 && item.name.getTypeID() == 0x00B1B104) {
-				}
-				else {
-					try {
-						for (Converter converter : converters) {
-							if (converter.isDecoder(item.name)) {
-								
-								if (converter.decode(dataStream, folder, item.name)) {
-									isConverted = true;
-									break;
-								}
-								else {
-									// throw new IOException("File could not be converted.");
-									// We could throw an error here, but it is not appropriate:
-									// some files cannot be converted but did not necessarily have an error,
-									// for example trying to convert a non-texture rw4. So we jsut keep searching
-									// for another converter or write the raw file.s
-									continue;
-								}
+
+				if (groupID != 0x40404000 || item.name.getTypeID() != 0x00B1B104) {
+					for (Converter converter : converters) {
+						if (converter.isDecoder(item.name)) {
+							logger.fine("Using converter: " + converter.getClass().getSimpleName() + " for item: " + item.name);
+							if (converter.decode(dataStream, folder, item.name)) {
+								isConverted = true;
+								convertedItems++;
+								logger.fine("Converted file: " + item.name);
+								break;
 							}
 						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						exceptions.put(item, e);
-						// Handling the exception here will make it write the unconverted file
 					}
 				}
-				
+
 				if (!isConverted) {
-					// If it hasn't been converted, just write the file straight away.
-					
 					String name = hasher.getFileName(item.name.getInstanceID()) + "." + hasher.getTypeName(item.name.getTypeID());
-					dataStream.writeToFile(new File(folder, name));
+					File outputFile = new File(folder, name);
+					dataStream.writeToFile(outputFile);
+					logger.fine("Saved raw file: " + outputFile.getAbsolutePath());
 				}
-				
+
 				if (writtenFiles != null) {
-					List<ResourceKey> list = writtenFiles.get(groupID);
-					if (list == null) {
-						list = new ArrayList<ResourceKey>();
-						writtenFiles.put(groupID, list);
-					}
-					list.add(item.name);
+					writtenFiles.computeIfAbsent(groupID, k -> new ArrayList<>()).add(item.name);
 				}
 			}
 			catch (Exception e) {
+				logger.warning("Error processing item: " + item.name + ". Error: " + e.getMessage());
 				exceptions.put(item, e);
 			}
+
+			if (processedItems % 100 == 0) {
+				logger.fine("Progress: " + processedItems + " / " + header.indexCount + " items processed");
+			}
 		}
-		
-		// Remove the extra names; if they need to be used, loading the project will load them as well
+
+		logger.fine("Unpacking completed. Total items: " + header.indexCount +
+				", Processed: " + processedItems +
+				", Converted: " + convertedItems +
+				", Skipped: " + skippedItems +
+				", Errors: " + exceptions.size());
+
 		hasher.getProjectRegistry().clear();
 	}
-	
+
 	public Exception call() throws Exception {
-		
+		logger.fine("Starting DBPFUnpacker.call()");
 		long initialTime = System.currentTimeMillis();
-		
+
 		if (inputStream != null) {
+			logger.fine("Unpacking from input stream");
 			unpackStream(inputStream, null);
 		}
 		else {
+			logger.fine("Unpacking from " + inputFiles.size() + " input files");
 			final HashMap<Integer, List<ResourceKey>> writtenFiles = new HashMap<Integer, List<ResourceKey>>();
-			boolean checkFiles = inputFiles.size() > 1;  // only check already existing files if we are unpacking more than one package at once
-			
+			boolean checkFiles = inputFiles.size() > 1;
+
 			for (File inputFile : inputFiles) {
 				if (!inputFile.exists()) {
+					logger.warning("Input file does not exist: " + inputFile.getAbsolutePath());
 					failedDBPFs.add(inputFile);
 					continue;
 				}
-				
+
+				logger.fine("Processing file: " + inputFile.getAbsolutePath());
 				for (Converter converter : converters) converter.reset();
-				
+
 				try (StreamReader packageStream = new FileStream(inputFile, "r"))  {
 					unpackStream(packageStream, checkFiles ? writtenFiles : null);
 				}
 				catch (Exception e) {
+					logger.severe("Error unpacking file: " + inputFile.getAbsolutePath() + ". Error: " + e.getMessage());
 					return e;
 				}
 			}
 		}
 
+		long endTime = System.currentTimeMillis();
+		logger.fine("DBPFUnpacker.call() completed in " + (endTime - initialTime) + "ms");
 		return null;
 	}
 }

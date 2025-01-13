@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.sporemodderfx</groupId>
-	<artifactId>sporemodderfx</artifactId>
+	<groupId>org.dbpf.unpacker</groupId>
+	<artifactId>dbpf_unpacker</artifactId>
 	<version>${revision}</version>
-	<name>SporeModder FX</name>
+	<name>DBPF Unpacker</name>
 	<properties>
 		<java.version>11</java.version>
 		<javafx.version>17.0.7</javafx.version>
