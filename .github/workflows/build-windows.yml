@@ -47,14 +47,14 @@ jobs:
         run: |
           native-image -jar bin/dbpf_unpacker.jar -H:Name=dbpf_unpacker -H:Class=sporemodder.Main -H:NativeLinkerOption="${{ github.workspace }}/res/dbpf_unpacker.res"
 
-      - name: Upload Native Binary
+      - name: Move Native Binary and Registry Files
+        run: |
+          mkdir bin_output
+          copy bin/dbpf_unpacker.exe bin_output/
+          copy ./*.txt bin_output/
+
+      - name: Upload Native Binary and Registry Files
         uses: actions/upload-artifact@v3
         with:
           name: dbpf_unpacker-windows-x64
-          path: ./bin/dbpf_unpacker.exe
-
-      - name: Upload Registry Files
-        uses: actions/upload-artifact@v3
-        with:
-          name: dbpf_unpacker-registry-files
-          path: ./*.txt
+          path: bin_output/*
