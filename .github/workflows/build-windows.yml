@@ -45,7 +45,7 @@ jobs:
 
       - name: Create Native Binary
         run: |
-          native-image -jar bin/dbpf_unpacker.jar -H:Name=dbpf_unpacker -H:Class=sporemodder.Main -H:NativeLinkerOption="res/dbpf_unpacker.res"
+          native-image -jar bin/dbpf_unpacker.jar -H:Name=dbpf_unpacker -H:Class=sporemodder.Main -H:NativeLinkerOption="${{ github.workspace }}/res/dbpf_unpacker.res"
 
       - name: Upload Native Binary
         uses: actions/upload-artifact@v3
