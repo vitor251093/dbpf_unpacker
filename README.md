@@ -13,7 +13,7 @@
 1. Download the latest release from the [Releases page](https://github.com/jeanxpereira/SporeModderFX-Unpacker/releases).  
 2. Run the program via command line:  
    ```bash
-   java -jar dbpf_unpacker.jar [-d|--debug] <file> <destination>
+   dbpf_unpacker.exe [-d|--debug] <file> <destination>
    ```
 - Replace `<file>` with the path to the .package file.
 - Replace `<destination>` with the directory where you 
