@@ -43,13 +43,13 @@ jobs:
             -H:Name=dbpf_unpacker \
             -H:Class=sporemodder.Main
 
-      - name: Move Files to Single Directory
+      - name: Move Native Binary and Registry Files
         run: |
           mkdir -p bin_output
           mv dbpf_unpacker bin_output/
           mv ./*.txt bin_output/
 
-      - name: Upload All Files in One Artifact
+      - name: Upload Native Binary and Registry Files
         uses: actions/upload-artifact@v3
         with:
           name: dbpf_unpacker-linux-x64

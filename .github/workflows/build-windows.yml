@@ -50,7 +50,7 @@ jobs:
       - name: Move Native Binary and Registry Files
         run: |
           mkdir bin_output
-          copy bin/dbpf_unpacker.exe bin_output/
+          copy ./dbpf_unpacker.exe bin_output/
           copy ./*.txt bin_output/
 
       - name: Upload Native Binary and Registry Files
