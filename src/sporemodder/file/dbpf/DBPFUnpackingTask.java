@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
+
+import sporemodder.MessageManager;
+import sporemodder.MessageManager.MessageType;
+import sporemodder.file.Converter;
 
 import sporemodder.HashManager;
 import sporemodder.file.ResourceKey;
@@ -52,7 +58,11 @@ public class DBPFUnpackingTask {
 	private static final double INDEX_PROGRESS = 0.05;
 	/** The estimated progress (in [0, 1]) that clearing the folder takes. */ 
 	private static final double CLEAR_FOLDER_PROGRESS = 0.10;
-	
+
+	private List<Converter> converters = new ArrayList<>();
+
+	private static final Logger logger = Logger.getLogger(DBPFUnpackingTask.class.getName());
+
 	// Cannot use getProgress() as it throws thread exception
 	private double progress = 0;
 	
@@ -67,7 +77,8 @@ public class DBPFUnpackingTask {
 	
 	/** The folder where all the contents will be written. */
 	private File outputFolder;
-	
+
+
 	/** We will keep all files that couldn't be converted here, so that we can keep unpacking the DBPF. */
 	private final Map<DBPFItem, Exception> exceptions = new HashMap<>();
 	
@@ -76,8 +87,7 @@ public class DBPFUnpackingTask {
 	
 	/** An optional filter that defines which items should be unpacked (true) and which shouldn't (false). */
 	private DBPFItemFilter itemFilter;
-	
-	private boolean setPackageSignature;
+
 	
 	//TODO it's faster, but apparently it causes problems; I can't reproduce the bug
 	private boolean isParallel = true;
@@ -85,9 +95,104 @@ public class DBPFUnpackingTask {
 	private boolean noJavaFX = false;
 	private Consumer<Double> noJavaFXProgressListener;
 
+
+	public DBPFUnpackingTask(File inputFile, File outputFolder, List<Converter> converters) {
+
+		this.inputFiles.add(inputFile);
+
+		this.outputFolder = outputFolder;
+
+		this.converters = converters;
+
+
+		this.inputStream = null;
+
+	}
+
+
+
+	public DBPFUnpackingTask(Collection<File> inputFiles, File outputFolder, List<Converter> converters) {
+
+		this.inputFiles.addAll(inputFiles);
+
+		this.outputFolder = outputFolder;
+
+		this.converters = converters;
+
+		this.inputStream = null;
+
+	}
+
+
+
 	public DBPFUnpackingTask(StreamReader inputStream, File outputFolder) {
 		this.inputStream = inputStream;
 		this.outputFolder = outputFolder;
+
+	}
+
+
+
+	public void setNoJavaFX() {
+
+		this.noJavaFX = true;
+
+	}
+
+
+
+	public void setNoJavaFXProgressListener(Consumer<Double> listener) {
+
+		noJavaFXProgressListener = listener;
+
+	}
+
+
+	/**
+
+	 * Returns a list of all the converters that will be used when unpacking files.
+
+	 * On every file, if the converter {@link Converter.isDecoder()} method returns true, it will be used to decode the file.
+
+	 * @return
+
+	 */
+
+	public List<Converter> getConverters() {
+
+		return converters;
+
+	}
+
+
+
+	/**
+
+	 * Returns the list of input package files that will be unpacked.
+
+	 * @return
+
+	 */
+
+	public List<File> getInputFiles() {
+
+		return inputFiles;
+
+	}
+
+
+
+	/**
+
+	 * Returns the output folder where the unpacked files will be written.
+
+	 * @return
+
+	 */
+
+	public File getOutputFolder() {
+
+		return outputFolder;
 	}
 
 	/**
@@ -115,34 +220,37 @@ public class DBPFUnpackingTask {
 	}
 
 	private void unpackStream(StreamReader packageStream, Map<Integer, Set<ResourceKey>> writtenFiles, double progressFraction) throws IOException, InterruptedException {
+		logger.info("Starting to unpack stream");
 		HashManager hasher = HashManager.get();
-			
+
 		DatabasePackedFile header = new DatabasePackedFile();
+		logger.info("Reading DBPF header");
 		header.readHeader(packageStream);
+		logger.info("Reading DBPF index");
 		header.readIndex(packageStream);
-		
+
 		DBPFIndex index = header.index;
+		logger.info("Reading " + header.indexCount + " items from index");
 		index.readItems(packageStream, header.indexCount, header.isDBBF);
-		
+
 		incProgress(INDEX_PROGRESS * progressFraction);
-		// How much each file adds to the progress
 		double inc = (1.0 - INDEX_PROGRESS) * progressFraction / header.indexCount;
-		
-		//First search sporemaster/names.txt, and use it if it exists
+
+		logger.info("Searching for sporemaster/names.txt");
 		hasher.getProjectRegistry().clear();
 		findNamesFile(index.items, packageStream);
-		
-		// Sometimes, reading the file data goes faster than the tasks, so we end up
-		// loading almost all the package into memory and that causes an OutOfMemory exception
-		// We must limit how many tasks we want running simultaneously.
+
 		int maxTasks = ForkJoinPool.getCommonPoolParallelism();
-		
+		logger.info("Max parallel tasks: " + maxTasks);
+
 		int itemIndex = -1;
 		CountDownLatch latch = new CountDownLatch(index.items.size());
+		logger.info("Processing " + index.items.size() + " items");
 		for (DBPFItem item : index.items) {
 			++itemIndex;
-			
+
 			if (itemFilter != null && !itemFilter.filter(item)) {
+				logger.fine("Skipping item due to filter: " + item.name);
 				latch.countDown();
 				incProgress(inc);
 				continue;
@@ -171,21 +279,24 @@ public class DBPFUnpackingTask {
 				incProgress(inc);
 				continue;
 			}
-			
-			
+
+
+			logger.fine("Processing item: " + item.name);
 			File folder = new File(outputFolder, hasher.getFileName(groupID));
 			folder.mkdir();
-			
+
 			FileConvertAction action = new FileConvertAction(item, folder, item.processFile(packageStream), inc, latch);
 			if (isParallel) {
 				if (itemIndex == index.items.size() - 1 || ForkJoinPool.commonPool().getQueuedSubmissionCount() >= maxTasks) {
-					// Execute in same thread if it's the last item or if we have many tasks waiting
+					logger.fine("Executing item in same thread: " + item.name);
 					ForkJoinPool.commonPool().invoke(action);
 				}
 				else {
+					logger.fine("Submitting item to thread pool: " + item.name);
 					ForkJoinPool.commonPool().execute(action);
 				}
 			} else {
+				logger.fine("Processing item sequentially: " + item.name);
 				action.compute();
 			}
 				
@@ -198,22 +309,24 @@ public class DBPFUnpackingTask {
 				groupSet.add(item.name);
 			}
 		}
-		
-		// Await for all files to finish writing
+
+		logger.info("Waiting for all files to finish writing");
 		latch.await();
-		
-		// Remove the extra names; if they need to be used, loading the project will load them as well
+
+		logger.info("Clearing extra names from registry");
 		hasher.getProjectRegistry().clear();
 	}
-	
+
 	public Exception call() throws Exception {
-		
+		logger.info("DBPFUnpackingTask started");
 		long initialTime = System.currentTimeMillis();
-		
+
 		if (inputStream != null) {
+			logger.info("Unpacking from input stream");
 			unpackStream(inputStream, null, 1.0);
 		}
 		else {
+			logger.info("Unpacking from " + inputFiles.size() + " input files");
 			double progressFactor = 1.0;
 			
 			final HashMap<Integer, Set<ResourceKey>> writtenFiles = new HashMap<>();
@@ -230,24 +343,29 @@ public class DBPFUnpackingTask {
 
 			int i = 0;
 			for (File inputFile : inputFiles) {
+				logger.info("Processing file: " + inputFile.getAbsolutePath());
 				double projectProgress = progressFactor * (double)fileSizes[i] / totalFileSize;
-				
+
 				if (!inputFile.exists()) {
+					logger.warning("Input file does not exist: " + inputFile.getAbsolutePath());
 					failedDBPFs.add(inputFile);
 					continue;
 				}
-				
+
 				try (StreamReader packageStream = new FileStream(inputFile, "r"))  {
 					unpackStream(packageStream, checkFiles ? writtenFiles : null, projectProgress);
 				}
 				catch (Exception e) {
+					logger.severe("Error unpacking file: " + inputFile.getAbsolutePath());
+					logger.severe(e.toString());
 					return e;
 				}
 				++i;
 			}
 		}
-		
+
 		ellapsedTime = System.currentTimeMillis() - initialTime;
+		logger.info("DBPFUnpackingTask completed in " + ellapsedTime + "ms");
 
 		return null;
 	}
@@ -270,14 +388,16 @@ public class DBPFUnpackingTask {
 			this.inc = inc;
 			this.latch = latch;
 		}
-		
+
 		@Override public void compute() {
 			try {
 				HashManager hasher = HashManager.get();
 				String name = hasher.getFileName(item.name.getInstanceID()) + "." + hasher.getTypeName(item.name.getTypeID());
+				logger.fine("Writing file: " + name);
 				dataStream.writeToFile(new File(folder, name));
 			}
 			catch (Exception e) {
+				logger.warning("Error converting file: " + item.name + " - " + e.toString());
 				exceptions.put(item, e);
 			}
 			finally {
