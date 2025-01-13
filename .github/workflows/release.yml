@@ -7,9 +7,28 @@ on:
       - completed
 
 jobs:
-  create-release:
+  check-builds:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - name: Check build artifacts
+        id: check
+        run: |
+          windows_artifact=$(gh api -X GET /repos/${{ github.repository }}/actions/artifacts -f name=windows-build-complete | jq '.artifacts[0].id')
+          ubuntu_artifact=$(gh api -X GET /repos/${{ github.repository }}/actions/artifacts -f name=ubuntu-build-complete | jq '.artifacts[0].id')
+          if [ "$windows_artifact" != "null" ] && [ "$ubuntu_artifact" != "null" ]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release:
+    needs: check-builds
+    if: needs.check-builds.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository

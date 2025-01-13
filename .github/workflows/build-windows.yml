@@ -66,3 +66,10 @@ jobs:
         with:
           name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_win64
           path: bin_output/*
+          
+      - name: Upload Build Completion Flag
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-complete
+          path: bin_output/windows-build-complete.txt
+          if-no-files-found: ignore

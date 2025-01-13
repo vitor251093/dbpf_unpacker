@@ -11,6 +11,7 @@ on:
 jobs:
   build-native-image:
     runs-on: ubuntu-latest
+    name: Build Linux
 
     steps:
       - name: Check out repository
@@ -60,3 +61,10 @@ jobs:
         with:
           name: DBPF-Unpacker-${{ steps.calculate_version.outputs.version }}_linux-x64
           path: bin_output/*
+
+      - name: Upload Build Completion Flag
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-build-complete
+          path: bin_output/ubuntu-build-complete.txt
+          if-no-files-found: ignore
