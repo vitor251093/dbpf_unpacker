@@ -42,7 +42,7 @@ public class Main {
             } else {
                 System.err.println("  error: too many arguments");
             }
-            System.err.println("  usage: dbpf_unpacker.exe [-d|--debug] <file> <destination>");
+            System.err.println("  usage: dbpf_unpacker [-d|--debug] <file> <destination>");
             System.exit(1);
         }
 
@@ -91,12 +91,12 @@ public class Main {
     }
 
     private static void configureLogger(Level level) {
-        Logger rootLogger = Logger.getLogger("");
-        rootLogger.setLevel(level);
+        // Agora, configuramos apenas o logger da classe Main
+        logger.setLevel(level);
 
         // Remove todos os handlers existentes
-        for (Handler handler : rootLogger.getHandlers()) {
-            rootLogger.removeHandler(handler);
+        for (Handler handler : logger.getHandlers()) {
+            logger.removeHandler(handler);
         }
 
         // Adiciona um novo ConsoleHandler
@@ -111,7 +111,7 @@ public class Main {
             }
         });
 
-        rootLogger.addHandler(handler);
+        logger.addHandler(handler);
 
         logger.info("Logger configured with level: " + level);
     }
