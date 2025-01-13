@@ -48,3 +48,9 @@ jobs:
         with:
           name: dbpf_unpacker-ubuntu-x64
           path: ./dbpf_unpacker
+          
+      - name: Upload Registry Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: dbpf_unpacker-registry-files
+          path: ./*.txt
