@@ -4,11 +4,6 @@ on: [push, pull_request]
 
 env:
   BUILD_TYPE: Release
-  
-permissions:
-  contents: write
-  packages: read
-  metadata: read
 
 jobs:
   get-info:
