@@ -7,15 +7,12 @@ public class LoggerManager {
     private static Level currentLevel = Level.INFO;
 
     public static void initialize(boolean debug) {
-        // Define o nível baseado no modo debug
-        currentLevel = debug ? Level.FINE : Level.WARNING;
+        currentLevel = debug ? Level.FINE : Level.INFO;
         
-        // Remove handlers existentes do root logger
         for (Handler handler : rootLogger.getHandlers()) {
             rootLogger.removeHandler(handler);
         }
         
-        // Configura o novo handler
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(currentLevel);
         handler.setFormatter(new SimpleFormatter() {
@@ -30,12 +27,10 @@ public class LoggerManager {
         rootLogger.setLevel(currentLevel);
         rootLogger.addHandler(handler);
         
-        // Configura todos os loggers existentes
         LogManager.getLogManager().getLoggerNames().asIterator().forEachRemaining(name -> {
             Logger logger = LogManager.getLogManager().getLogger(name);
             if (logger != null) {
                 logger.setLevel(currentLevel);
-                // Remove handlers específicos
                 for (Handler h : logger.getHandlers()) {
                     logger.removeHandler(h);
                 }
