@@ -61826,6 +61826,7 @@ infinity_4_default
 infinity_4_environment
 infinity_4_heat_map_cameras
 infinity_4_levelshop
+infinity_4_plants
 infinity_4_shadow cards
 info_banner_blankslate
 info_banner_currentcorps
@@ -66127,6 +66128,7 @@ nocturna_4_animation
 nocturna_4_animation_common
 nocturna_4_audio
 nocturna_4_blobshadows
+nocturna_4_default
 nocturna_4_design
 nocturna_4_design_blocks
 nocturna_4_environment
@@ -72655,6 +72657,7 @@ scaldron_2_AI_spike_9a
 scaldron_2_Animation_common
 scaldron_2_Audio
 scaldron_2_Audio_ambience
+scaldron_2_default
 scaldron_2_Design
 scaldron_2_Lights
 scaldron_2_Obelisk_1
@@ -72713,6 +72716,7 @@ scaldron_3_AI_spike_8a
 scaldron_3_AI_spike_9a
 scaldron_3_Audio
 scaldron_3_Audio_ambient
+scaldron_3_default
 scaldron_3_Design
 scaldron_3_Lights
 scaldron_3_Obelisk_1
@@ -72785,6 +72789,7 @@ scaldron_4_Objects
 scaldron_4_SM
 scaldron_4_SM_Audio
 scaldron_4_SM_Decals
+scaldron_4_SM_default
 scaldron_4_SM_Design
 scaldron_4_SM_Environments
 scaldron_4_SM_Lights
@@ -94217,6 +94222,7 @@ verdanth_2_animation_common
 verdanth_2_audio
 verdanth_2_blobshadows
 verdanth_2_decals
+verdanth_2_default
 verdanth_2_design
 verdanth_2_design_blocks
 verdanth_2_environment
