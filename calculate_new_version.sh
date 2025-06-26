@@ -17,9 +17,26 @@ major=${numbers[0]:-0}
 minor=${numbers[1]:-0}
 patch=${numbers[2]:-0}
 
-# Increment the patch version
-new_patch=$((patch + 1))
+# Logic for version increment
+if [ $patch -ge 9 ]; then
+    # If patch is 9 or higher, increment minor and reset patch
+    new_minor=$((minor + 1))
+    new_patch=0
+    
+    # If minor reaches 10, increment major and reset minor
+    if [ $new_minor -ge 10 ]; then
+        new_major=$((major + 1))
+        new_minor=0
+    else
+        new_major=$major
+    fi
+else
+    # Otherwise, just increment patch
+    new_major=$major
+    new_minor=$minor
+    new_patch=$((patch + 1))
+fi
 
 # Output the new version
-new_version="${major}.${minor}.${new_patch}"
+new_version="${new_major}.${new_minor}.${new_patch}"
 echo "$new_version"
