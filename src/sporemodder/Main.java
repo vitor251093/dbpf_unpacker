@@ -16,7 +16,7 @@ import java.util.logging.LogRecord;
 
 public class Main {
 
-    public static String version = "1.0.0";
+    public static String version = "0.0.9";
 
     private static final Logger logger = LoggerManager.getLogger(Main.class);
 
@@ -24,16 +24,15 @@ public class Main {
 
         boolean debug = false;
 
-        // Verifica o argumento de depuração
         if (args.length > 0 && (args[0].equals("-d") || args[0].equals("--debug"))) {
             debug = true;
             System.out.println("Debug mode enabled");
+            configureLogger(Level.FINE);
+        } else {
+            configureLogger(Level.INFO);
         }
 
-        // Inicializa o logger globalmente
         LoggerManager.initialize(debug);
-
-        // Ajusta os índices dependendo se o modo debug está ativo
         int fileArgIndex = debug ? 1 : 0;
 
         if (args.length != (fileArgIndex + 2)) {
@@ -94,44 +93,36 @@ public class Main {
     }
 
     private static void configureLogger(Level level) {
-        // Configura o nível do logger root e remove handlers existentes
         Logger rootLogger = Logger.getLogger("");
         rootLogger.setLevel(level);
         
         for (Handler handler : rootLogger.getHandlers()) {
             rootLogger.removeHandler(handler);
         }
-
-        // Configura o novo handler com o nível especificado
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(level);
         
         handler.setFormatter(new SimpleFormatter() {
             @Override
             public String format(LogRecord record) {
-                // Só exibe logs se estiverem no nível correto
                 if (record.getLevel().intValue() >= level.intValue()) {
                     return String.format("[%s] %s%n", record.getLevel(), record.getMessage());
                 }
-                return ""; // Retorna string vazia para outros níveis
+                return "";
             }
         });
         
         rootLogger.addHandler(handler);
         
-        // Configura todos os loggers existentes para usar o mesmo nível
         LogManager.getLogManager().getLoggerNames().asIterator().forEachRemaining(name -> {
             Logger logger = LogManager.getLogManager().getLogger(name);
             if (logger != null) {
                 logger.setLevel(level);
-                // Remove handlers específicos de outros loggers
                 for (Handler h : logger.getHandlers()) {
                     logger.removeHandler(h);
                 }
             }
         });
-
-        // Só exibe essa mensagem se estivermos em modo debug
         if (level == Level.FINE) {
             logger.fine("Logger configured with level: " + level);
         }
